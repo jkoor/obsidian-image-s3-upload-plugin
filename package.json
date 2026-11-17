@@ -1,5 +1,5 @@
 {
-  "name": "obsidian-image-auto-upload-plugin",
+  "name": "obsidian-s3-image-uploader",
   "version": "5.0.0",
   "type": "module",
   "description": "Upload local and remote images directly to S3-compatible storage in Obsidian",

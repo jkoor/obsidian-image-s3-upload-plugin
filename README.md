@@ -1,12 +1,12 @@
 [中文文档](readme-zh.md)
 
-# Obsidian Image Auto Upload — S3
+# S3 Image Uploader
 
 Upload images directly to AWS S3 or S3-compatible object storage. No PicGo, desktop helper, or upload server is required. Requires Obsidian **1.7.2 or later**.
 
 ## Setup
 
-Install this plugin's `main.js` and `manifest.json` in `.obsidian/plugins/obsidian-image-auto-upload-plugin/`, enable it, and open its settings.
+Install this plugin's `main.js` and `manifest.json` in `.obsidian/plugins/image-s3-upload/`, enable **S3 Image Uploader**, and open its settings.
 
 | Setting | Example / meaning |
 | --- | --- |
@@ -61,7 +61,7 @@ Android/iOS behavior still requires device testing. See [TESTING.md](TESTING.md)
 
 ## Migration and development
 
-The plugin ID, command IDs, and frontmatter key are unchanged. General preferences are retained; old PicGo settings and remote-delete records are removed during migration. Existing note links are not rewritten. Remote object deletion is not part of this version.
+This fork uses the plugin ID `image-s3-upload`. When moving from the original plugin, disable it and install S3 Image Uploader in the new directory. To retain general preferences, copy the original plugin's `data.json` to the new directory before enabling it. Old PicGo settings and remote-delete records are removed when settings are loaded; configure S3 separately. Command IDs and the `image-auto-upload` frontmatter key are retained. Existing note links are not rewritten. Remote object deletion is not part of this version.
 
 ```sh
 pnpm install --frozen-lockfile
@@ -85,8 +85,8 @@ Use Node.js 24 and the pnpm version pinned in `package.json`. Pushes and pull re
    git push origin 5.0.0
    ```
 
-4. The **Release plugin** workflow creates a **draft GitHub Release** with `main.js`, `manifest.json`, optional `styles.css`, and `obsidian-image-auto-upload-plugin-5.0.0.zip`. Review the release notes in GitHub Releases and click **Publish release** when ready.
+4. The **Release plugin** workflow creates a **draft GitHub Release** with `main.js`, `manifest.json`, optional `styles.css`, and `image-s3-upload-5.0.0.zip`. Review the release notes in GitHub Releases and click **Publish release** when ready.
 
 You can also run **Actions → Release plugin → Run workflow**, entering an existing version tag. The workflow checks out that tag and verifies it against the version files. Reruns can replace assets on a draft; published releases are protected from replacement. The repository's built-in `GITHUB_TOKEN` supplies release permissions; no personal token or additional secret is needed. GitHub Actions must be enabled in the repository.
 
-For manual installation, download `main.js` and `manifest.json` from the release into the plugin directory, or extract the ZIP into `.obsidian/plugins/`. Keep the plugin directory named `obsidian-image-auto-upload-plugin`.
+For manual installation, download `main.js` and `manifest.json` from the release into the plugin directory, or extract the ZIP into `.obsidian/plugins/`. Keep the plugin directory named `image-s3-upload`.

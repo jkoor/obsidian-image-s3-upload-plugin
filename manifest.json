@@ -1,11 +1,10 @@
 {
-  "id": "obsidian-image-auto-upload-plugin",
-  "name": "Image auto upload",
+  "id": "image-s3-upload",
+  "name": "S3 Image Uploader",
   "version": "5.0.0",
   "minAppVersion": "1.7.2",
   "description": "Upload clipboard, local and remote images directly to S3-compatible storage",
-  "author": "renmu",
-  "authorUrl": "https://github.com/renmu123/obsidian-image-auto-upload-plugin",
-  "isDesktopOnly": false,
-  "fundingUrl": "https://afdian.com/a/renmu123"
+  "author": "Hardy",
+  "authorUrl": "https://github.com/jkoor/obsidian-image-s3-upload-plugin",
+  "isDesktopOnly": false
 }

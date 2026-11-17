@@ -1,10 +1,10 @@
-# Obsidian 图片 S3 直传插件
+# S3 Image Uploader
 
 直接将图片上传到 AWS S3 或兼容 S3 的对象存储，无需 PicGo、桌面助手或额外上传服务器。要求 **Obsidian 1.7.2 及以上**。
 
 ## 配置
 
-将构建的 `main.js` 和 `manifest.json` 放入库内 `.obsidian/plugins/obsidian-image-auto-upload-plugin/`，启用插件并打开设置。
+将构建的 `main.js` 和 `manifest.json` 放入库内 `.obsidian/plugins/image-s3-upload/`，启用 **S3 Image Uploader** 并打开设置。
 
 | 配置 | 说明 |
 | --- | --- |
@@ -56,7 +56,7 @@ S3 配置不完整时不拦截普通粘贴/拖拽。粘贴图片失败后，请�
 
 ## 迁移与构建
 
-保留插件 ID、原命令 ID 和 frontmatter 字段。保留通用偏好，迁移时移除 PicGo 专用配置和历史删除记录，不改写已有笔记链接。本版本不提供 S3 远程删除。
+此分支使用插件 ID `image-s3-upload`。从原版迁移时，请先禁用原插件，再将 S3 Image Uploader 安装到新目录。如需保留通用偏好，可在启用前将原插件的 `data.json` 复制到新目录。加载设置时会移除 PicGo 专用配置和历史删除记录，S3 需要单独配置。保留原命令 ID 和 `image-auto-upload` frontmatter 字段，不改写已有笔记链接。本版本不提供 S3 远程删除。
 
 ```sh
 pnpm install --frozen-lockfile
@@ -80,8 +80,8 @@ pnpm run build
    git push origin 5.0.0
    ```
 
-4. **Release plugin** 工作流会创建 GitHub Release **草稿**，附带 `main.js`、`manifest.json`、可选的 `styles.css` 和 `obsidian-image-auto-upload-plugin-5.0.0.zip`。在 GitHub Releases 检查说明后，点击 **Publish release** 正式发布。
+4. **Release plugin** 工作流会创建 GitHub Release **草稿**，附带 `main.js`、`manifest.json`、可选的 `styles.css` 和 `image-s3-upload-5.0.0.zip`。在 GitHub Releases 检查说明后，点击 **Publish release** 正式发布。
 
 也可以进入 **Actions → Release plugin → Run workflow**，填写已存在的版本标签手动运行。工作流会检出该标签并验证版本一致性；重复执行可以更新草稿附件，已发布版本的附件禁止覆盖。发布权限使用仓库自带的 `GITHUB_TOKEN`，无需配置个人 Token 或额外 Secret，但需要在仓库中启用 GitHub Actions。
 
-手动安装时，将 Release 的 `main.js` 和 `manifest.json` 下载到插件目录，或将 ZIP 解压到 `.obsidian/plugins/`。插件目录名保持为 `obsidian-image-auto-upload-plugin`。
+手动安装时，将 Release 的 `main.js` 和 `manifest.json` 下载到插件目录，或将 ZIP 解压到 `.obsidian/plugins/`。插件目录名保持为 `image-s3-upload`。

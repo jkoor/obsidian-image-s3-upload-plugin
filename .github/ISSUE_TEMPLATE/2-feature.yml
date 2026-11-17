@@ -6,7 +6,7 @@ body:
     attributes:
       label: I have tried the following
       options:
-        - label: Tried using the [latest version](https://github.com/renmu123/obsidian-image-auto-upload-plugin)
+        - label: Tried using the [latest version](https://github.com/jkoor/obsidian-image-s3-upload-plugin/releases)
           required: true
         - label: Checked if someone has already requested a similar feature
           required: true
