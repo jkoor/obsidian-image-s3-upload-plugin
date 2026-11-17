@@ -12,6 +12,6 @@ export default {
     exports: "default",
     inlineDynamicImports: true,
   },
-  external: ["obsidian", "electron"],
-  plugins: [typescript(), nodeResolve({ browser: false }), commonjs(), json()],
+  external: ["obsidian"],
+  plugins: [typescript({ exclude: ["test/**"] }), nodeResolve({ browser: true }), commonjs(), json()],
 };

@@ -2,17 +2,17 @@
   "name": "obsidian-image-auto-upload-plugin",
   "version": "4.1.0",
   "type": "module",
-  "description": "This plugin uploads images from your clipboard by picGo and embeds uploaded image to your note",
+  "description": "Upload local and remote images directly to S3-compatible storage in Obsidian",
   "main": "main.js",
   "scripts": {
     "dev": "rollup --config rollup.config.js -w",
     "build": "pnpm run typecheck && rollup --config rollup.config.js",
-    "typecheck": "tsc --noEmit -p tsconfig.json --composite false",
+    "typecheck": "tsc --noEmit -p tsconfig.json --composite false && tsc --noEmit -p tsconfig.vitest.json",
     "test": "vitest run"
   },
   "keywords": [
     "obsidian.md",
-    "picgo"
+    "s3"
   ],
   "author": "renmu",
   "license": "MIT",
@@ -21,10 +21,8 @@
     "@rollup/plugin-json": "^6.1.0",
     "@rollup/plugin-node-resolve": "^15.3.0",
     "@rollup/plugin-typescript": "^12.1.1",
-    "@types/electron": "^1.6.12",
     "@types/node": "20.17.6",
     "@types/path-browserify": "^1.0.3",
-    "electron": "^33.2.0",
     "jsdom": "^25.0.1",
     "obsidian": "^1.7.2",
     "path-browserify": "^1.0.1",
@@ -34,7 +32,7 @@
     "vitest": "^2.1.5"
   },
   "dependencies": {
-    "image-type": "^5.2.0"
+    "aws4fetch": "^1.0.20"
   },
   "packageManager": "pnpm@9.12.3+sha512.cce0f9de9c5a7c95bef944169cc5dfe8741abfb145078c0d508b868056848a87c81e626246cb60967cbd7fd29a6c062ef73ff840d96b3c86c40ac92cf4a813ee"
 }

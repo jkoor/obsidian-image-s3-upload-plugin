@@ -1,3 +1,5 @@
+import { vi } from "vitest";
+
 export class App {
   workspace = {
     getActiveFile: () => ({ path: "mock/path" }),
@@ -21,4 +23,43 @@ export class App {
   };
 }
 
-export class MarkdownView {}
+export class MarkdownView {
+  file: TFile;
+  editor: any;
+  constructor(_leaf?: unknown) {}
+}
+
+export class TFile {
+  path: string;
+  name: string;
+  basename: string;
+  extension: string;
+  constructor(path = "") {
+    this.path = path;
+    this.name = path.split("/").pop() || "";
+    this.extension = this.name.split(".").pop() || "";
+    this.basename = this.name.replace(/\.[^.]+$/, "");
+  }
+}
+
+export class Plugin {
+  constructor(public app: any, public manifest: any = {}) {}
+  loadData = vi.fn(async () => null);
+  saveData = vi.fn(async (_value: unknown) => {});
+  addSettingTab = vi.fn();
+  addCommand = vi.fn();
+  registerEvent = vi.fn();
+}
+
+export class PluginSettingTab {
+  constructor(_app: any, _plugin: any) {}
+}
+
+export class Setting {}
+export const requestUrl = vi.fn();
+export const getBlobArrayBuffer = (blob: Blob) => blob.arrayBuffer();
+export const moment = { locale: () => "en" };
+export class Notice {
+  static messages: string[] = [];
+  constructor(message: string, _duration?: number) { Notice.messages.push(message); }
+}

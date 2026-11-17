@@ -1,111 +1,36 @@
-import { normalizePath, Notice, requestUrl } from "obsidian";
-
-import { relative, join, parse } from "path-browserify";
-import imageType from "image-type";
-
-import { getUrlAsset, uuid } from "./utils";
+import { Notice } from "obsidian";
+import { relative, dirname } from "path-browserify";
+import type ImageAutoUploadPlugin from "./main";
+import { downloadImage } from "./images";
+import { imageFormat, isNetworkUrl } from "./utils";
+import { replaceImageReferences } from "./helper";
+import { updateDocument } from "./document";
 import { t } from "./lang/helpers";
-import type imageAutoUploadPlugin from "./main";
 
-export async function downloadAllImageFiles(plugin: imageAutoUploadPlugin) {
-  const activeFile = plugin.app.workspace.getActiveFile();
-  const folderPath = await plugin.app.fileManager.getAvailablePathForAttachment(
-    ""
-  );
-
-  const fileArray = plugin.helper.getAllFiles();
-
-  if (!(await plugin.app.vault.adapter.exists(folderPath))) {
-    await plugin.app.vault.adapter.mkdir(folderPath);
+export async function downloadAllImageFiles(plugin: ImageAutoUploadPlugin) {
+  const target = plugin.captureTarget();
+  if (!target) return;
+  const refs = plugin.helper.getImageLink(target.editor.getValue()).filter(ref => isNetworkUrl(ref.path));
+  const replacements = new Map<string, string>();
+  const downloads = new Map<string, string>();
+  let failed = 0;
+  for (const ref of refs) {
+    try {
+      let path = downloads.get(ref.path);
+      if (!path) {
+        const image = await downloadImage(ref.path);
+        const format = imageFormat(image.data);
+        const name = image.name.replace(/\.[^.]+$/, "").replace(/[\\/:*?"<>|\r\n]/g, "-") || "image";
+        path = await plugin.app.fileManager.getAvailablePathForAttachment(`${name}.${format.ext}`, target.file.path);
+        const parent = dirname(path);
+        if (parent !== "." && !(await plugin.app.vault.adapter.exists(parent))) await plugin.app.vault.createFolder(parent);
+        await plugin.app.vault.createBinary(path, image.data);
+        downloads.set(ref.path, path);
+      }
+      const link = encodeURI(relative(dirname(target.file.path), path)).replace(/[()]/g, char => char === "(" ? "%28" : "%29");
+      replacements.set(ref.source, plugin.markdown(ref.name, link));
+    } catch { failed++; }
   }
-
-  let imageArray = [];
-  for (const file of fileArray) {
-    if (!file.path.startsWith("http")) {
-      continue;
-    }
-
-    const url = file.path;
-    const asset = getUrlAsset(url);
-    let name = decodeURI(parse(asset).name).replaceAll(/[\\\\/:*?\"<>|]/g, "-");
-
-    const response = await download(plugin, url, folderPath, name);
-    if (response.ok) {
-      const activeFolder = plugin.app.workspace.getActiveFile().parent.path;
-
-      imageArray.push({
-        source: file.source,
-        name: name,
-        path: normalizePath(
-          relative(normalizePath(activeFolder), normalizePath(response.path))
-        ),
-      });
-    }
-  }
-
-  let value = plugin.helper.getValue();
-  imageArray.map(image => {
-    let name = plugin.handleName(image.name);
-
-    value = value.replace(image.source, `![${name}](${encodeURI(image.path)})`);
-  });
-
-  const currentFile = plugin.app.workspace.getActiveFile();
-  if (activeFile.path !== currentFile.path) {
-    new Notice(t("File has been changedd, download failure"));
-    return;
-  }
-  plugin.helper.setValue(value);
-
-  new Notice(
-    `all: ${fileArray.length}\nsuccess: ${imageArray.length}\nfailed: ${
-      fileArray.length - imageArray.length
-    }`
-  );
-}
-
-async function download(
-  plugin: imageAutoUploadPlugin,
-  url: string,
-  folderPath: string,
-  name: string
-) {
-  const response = await requestUrl({ url });
-
-  if (response.status !== 200) {
-    return {
-      ok: false,
-      msg: "error",
-    };
-  }
-
-  const type = await imageType(new Uint8Array(response.arrayBuffer));
-  if (!type) {
-    return {
-      ok: false,
-      msg: "error",
-    };
-  }
-
-  try {
-    let path = normalizePath(join(folderPath, `${name}.${type.ext}`));
-
-    // 如果文件名已存在，则用随机值替换，不对文件后缀进行判断
-    if (await plugin.app.vault.adapter.exists(path)) {
-      path = normalizePath(join(folderPath, `${uuid()}.${type.ext}`));
-    }
-
-    plugin.app.vault.adapter.writeBinary(path, response.arrayBuffer);
-    return {
-      ok: true,
-      msg: "ok",
-      path: path,
-      type,
-    };
-  } catch (err) {
-    return {
-      ok: false,
-      msg: err,
-    };
-  }
+  await updateDocument(plugin.app, target, value => replaceImageReferences(value, replacements));
+  new Notice(`${t("Download result")}: ${t("Success")} ${refs.length - failed}, ${t("Failed")} ${failed}`);
 }

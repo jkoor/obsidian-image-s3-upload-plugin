@@ -1,231 +1,138 @@
-import { App, PluginSettingTab, Setting, Notice, Platform } from "obsidian";
-import imageAutoUploadPlugin from "./main";
+import { App, PluginSettingTab, Setting } from "obsidian";
+import type ImageAutoUploadPlugin from "./main";
 import { t } from "./lang/helpers";
 
+export interface S3Settings {
+  endpoint: string;
+  region: string;
+  bucket: string;
+  accessKeyId: string;
+  secretAccessKey: string;
+  sessionToken: string;
+  forcePathStyle: boolean;
+  prefix: string;
+  publicBaseUrl: string;
+}
+
 export interface PluginSettings {
+  settingsVersion: number;
+  s3: S3Settings;
   uploadByClipSwitch: boolean;
-  uploadServer: string;
-  deleteServer: string;
   imageSizeSuffix: string;
-  uploader: string;
-  picgoCorePath: string;
   workOnNetWork: boolean;
   newWorkBlackDomains: string;
   applyImage: boolean;
   deleteSource: boolean;
   imageDesc: "origin" | "none" | "removeDefault";
-  remoteServerMode: boolean;
-  [propName: string]: any;
 }
 
 export const DEFAULT_SETTINGS: PluginSettings = {
+  settingsVersion: 1,
+  s3: {
+    endpoint: "", region: "", bucket: "", accessKeyId: "",
+    secretAccessKey: "", sessionToken: "", forcePathStyle: false,
+    prefix: "obsidian", publicBaseUrl: "",
+  },
   uploadByClipSwitch: true,
-  uploader: "PicGo",
-  uploadServer: "http://127.0.0.1:36677/upload",
-  deleteServer: "http://127.0.0.1:36677/delete",
   imageSizeSuffix: "",
-  picgoCorePath: "",
   workOnNetWork: false,
   applyImage: true,
   newWorkBlackDomains: "",
   deleteSource: false,
   imageDesc: "origin",
-  remoteServerMode: false,
 };
 
-export class SettingTab extends PluginSettingTab {
-  plugin: imageAutoUploadPlugin;
-
-  constructor(app: App, plugin: imageAutoUploadPlugin) {
-    super(app, plugin);
-    this.plugin = plugin;
+/** Copy supported settings without mutating defaults or carrying PicGo fields. */
+export function migrateSettings(data: Partial<PluginSettings> | null): PluginSettings {
+  const saved = data || {};
+  const settings: PluginSettings = {
+    ...DEFAULT_SETTINGS,
+    s3: { ...DEFAULT_SETTINGS.s3, ...saved.s3 },
+  };
+  for (const key of ["uploadByClipSwitch", "workOnNetWork", "applyImage"] as const) {
+    if (typeof saved[key] === "boolean") settings[key] = saved[key];
   }
+  for (const key of ["imageSizeSuffix", "newWorkBlackDomains"] as const) {
+    if (typeof saved[key] === "string") settings[key] = saved[key];
+  }
+  if (["origin", "none", "removeDefault"].includes(saved.imageDesc)) settings.imageDesc = saved.imageDesc;
+  settings.deleteSource = saved.settingsVersion === 1 && saved.deleteSource === true;
+  return settings;
+}
 
-  display(): void {
-    let { containerEl } = this;
+export class SettingTab extends PluginSettingTab {
+  constructor(app: App, private plugin: ImageAutoUploadPlugin) { super(app, plugin); }
 
+  display() {
+    const { containerEl } = this;
     containerEl.empty();
-    containerEl.createEl("h2", { text: t("Plugin Settings") });
-    new Setting(containerEl)
-      .setName(t("Auto pasted upload"))
-      .setDesc(
-        t(
-          "If you set this value true, when you paste image, it will be auto uploaded(you should set the picGo server rightly)"
-        )
-      )
-      .addToggle(toggle =>
-        toggle
-          .setValue(this.plugin.settings.uploadByClipSwitch)
+    containerEl.createEl("h2", { text: t("S3 upload") });
+    containerEl.createEl("p", { text: t("S3 credentials warning") });
+    const fields: [keyof S3Settings, Parameters<typeof t>[0], string, boolean?][] = [
+      ["endpoint", "Endpoint", "https://s3.ap-southeast-1.amazonaws.com"],
+      ["region", "Region", "ap-southeast-1"],
+      ["bucket", "Bucket", "my-images"],
+      ["accessKeyId", "Access Key ID", ""],
+      ["secretAccessKey", "Secret Access Key", "", true],
+      ["sessionToken", "Session Token", "", true],
+      ["publicBaseUrl", "Public base URL", "https://images.example.com"],
+      ["prefix", "Object prefix", "obsidian"],
+    ];
+    for (const [key, label, placeholder, secret] of fields) {
+      new Setting(containerEl).setName(t(label)).addText(text => {
+        if (secret) text.inputEl.type = "password";
+        text.setPlaceholder(placeholder).setValue(String(this.plugin.settings.s3[key]))
           .onChange(async value => {
-            this.plugin.settings.uploadByClipSwitch = value;
+            (this.plugin.settings.s3[key] as string) = value.trim();
             await this.plugin.saveSettings();
-          })
-      );
-
-    new Setting(containerEl)
-      .setName(t("Default uploader"))
-      .setDesc(t("Default uploader"))
-      .addDropdown(cb =>
-        cb
-          .addOption("PicGo", "PicGo(app)")
-          .addOption("PicGo-Core", "PicGo-Core")
-          .setValue(this.plugin.settings.uploader)
-          .onChange(async value => {
-            this.plugin.settings.uploader = value;
-            this.display();
-            await this.plugin.saveSettings();
-          })
-      );
-
-    if (this.plugin.settings.uploader === "PicGo") {
-      new Setting(containerEl)
-        .setName(t("PicGo server"))
-        .setDesc(t("PicGo server desc"))
-        .addText(text =>
-          text
-            .setPlaceholder(t("Please input PicGo server"))
-            .setValue(this.plugin.settings.uploadServer)
-            .onChange(async key => {
-              this.plugin.settings.uploadServer = key;
-              await this.plugin.saveSettings();
-            })
-        );
-
-      new Setting(containerEl)
-        .setName(t("PicGo delete server"))
-        .setDesc(t("PicList desc"))
-        .addText(text =>
-          text
-            .setPlaceholder(t("Please input PicGo delete server"))
-            .setValue(this.plugin.settings.deleteServer)
-            .onChange(async key => {
-              this.plugin.settings.deleteServer = key;
-              await this.plugin.saveSettings();
-            })
-        );
+          });
+      });
     }
-
-    new Setting(containerEl)
-      .setName(t("Remote server mode"))
-      .setDesc(t("Remote server mode desc"))
-      .addToggle(toggle =>
-        toggle
-          .setValue(this.plugin.settings.remoteServerMode)
-          .onChange(async value => {
-            this.plugin.settings.remoteServerMode = value;
-            if (value) {
-              this.plugin.settings.workOnNetWork = false;
-            }
-            this.display();
-            await this.plugin.saveSettings();
-          })
-      );
-
-    if (this.plugin.settings.uploader === "PicGo-Core") {
-      new Setting(containerEl)
-        .setName(t("PicGo-Core path"))
-        .setDesc(
-          t("Please input PicGo-Core path, default using environment variables")
-        )
-        .addText(text =>
-          text
-            .setPlaceholder("")
-            .setValue(this.plugin.settings.picgoCorePath)
-            .onChange(async value => {
-              this.plugin.settings.picgoCorePath = value;
-              await this.plugin.saveSettings();
-            })
-        );
+    new Setting(containerEl).setName(t("Path style"))
+      .setDesc(t("Path style description"))
+      .addToggle(toggle => toggle.setValue(this.plugin.settings.s3.forcePathStyle)
+        .onChange(async value => {
+          this.plugin.settings.s3.forcePathStyle = value;
+          await this.plugin.saveSettings();
+        }));
+    containerEl.createEl("p", { text: t("Public URL description") });
+    const toggles: [keyof PluginSettings, Parameters<typeof t>[0]][] = [
+      ["uploadByClipSwitch", "Auto pasted upload"],
+      ["workOnNetWork", "Work on network"],
+      ["applyImage", "Upload when clipboard has image and text together"],
+      ["deleteSource", "Delete source file after you upload file"],
+    ];
+    for (const [key, label] of toggles) {
+      const setting = new Setting(containerEl).setName(t(label));
+      if (key === "deleteSource") setting.setDesc(t("Safe deletion description"));
+      if (key === "workOnNetWork") setting.setDesc(t("Work on network Description"));
+      setting.addToggle(toggle => toggle.setValue(Boolean(this.plugin.settings[key]))
+        .onChange(async value => {
+          (this.plugin.settings[key] as boolean) = value;
+          await this.plugin.saveSettings();
+        }));
     }
-
-    // image desc setting
-    new Setting(containerEl)
-      .setName(t("Image desc"))
-      .setDesc(t("Image desc"))
-      .addDropdown(cb =>
-        cb
-          .addOption("origin", t("reserve")) // 保留全部
-          .addOption("none", t("remove all")) // 移除全部
-          .addOption("removeDefault", t("remove default")) // 只移除默认即 image.png
-          .setValue(this.plugin.settings.imageDesc)
-          .onChange(async (value: "origin" | "none" | "removeDefault") => {
-            this.plugin.settings.imageDesc = value;
-            this.display();
-            await this.plugin.saveSettings();
-          })
-      );
-
-    new Setting(containerEl)
-      .setName(t("Image size suffix"))
-      .setDesc(t("Image size suffix Description"))
-      .addText(text =>
-        text
-          .setPlaceholder(t("Please input image size suffix"))
-          .setValue(this.plugin.settings.imageSizeSuffix)
-          .onChange(async key => {
-            this.plugin.settings.imageSizeSuffix = key;
-            await this.plugin.saveSettings();
-          })
-      );
-
-    new Setting(containerEl)
-      .setName(t("Work on network"))
-      .setDesc(t("Work on network Description"))
-      .addToggle(toggle =>
-        toggle
-          .setValue(this.plugin.settings.workOnNetWork)
-          .onChange(async value => {
-            if (this.plugin.settings.remoteServerMode) {
-              new Notice("Can only work when remote server mode is off.");
-              this.plugin.settings.workOnNetWork = false;
-            } else {
-              this.plugin.settings.workOnNetWork = value;
-            }
-            this.display();
-            await this.plugin.saveSettings();
-          })
-      );
-
-    new Setting(containerEl)
-      .setName(t("Network Domain Black List"))
+    new Setting(containerEl).setName(t("Network Domain Black List"))
       .setDesc(t("Network Domain Black List Description"))
-      .addTextArea(textArea =>
-        textArea
-          .setValue(this.plugin.settings.newWorkBlackDomains)
-          .onChange(async value => {
-            this.plugin.settings.newWorkBlackDomains = value;
-            await this.plugin.saveSettings();
-          })
-      );
-
-    new Setting(containerEl)
-      .setName(t("Upload when clipboard has image and text together"))
-      .setDesc(
-        t(
-          "When you copy, some application like Excel will image and text to clipboard, you can upload or not."
-        )
-      )
-      .addToggle(toggle =>
-        toggle
-          .setValue(this.plugin.settings.applyImage)
-          .onChange(async value => {
-            this.plugin.settings.applyImage = value;
-            this.display();
-            await this.plugin.saveSettings();
-          })
-      );
-
-    new Setting(containerEl)
-      .setName(t("Delete source file after you upload file"))
-      .setDesc(t("Delete source file in ob assets after you upload file."))
-      .addToggle(toggle =>
-        toggle
-          .setValue(this.plugin.settings.deleteSource)
-          .onChange(async value => {
-            this.plugin.settings.deleteSource = value;
-            this.display();
-            await this.plugin.saveSettings();
-          })
-      );
+      .addTextArea(text => text.setValue(this.plugin.settings.newWorkBlackDomains)
+        .onChange(async value => {
+          this.plugin.settings.newWorkBlackDomains = value;
+          await this.plugin.saveSettings();
+        }));
+    new Setting(containerEl).setName(t("Image desc"))
+      .addDropdown(dropdown => dropdown.addOption("origin", t("reserve"))
+        .addOption("none", t("remove all")).addOption("removeDefault", t("remove default"))
+        .setValue(this.plugin.settings.imageDesc)
+        .onChange(async (value: PluginSettings["imageDesc"]) => {
+          this.plugin.settings.imageDesc = value;
+          await this.plugin.saveSettings();
+        }));
+    new Setting(containerEl).setName(t("Image size suffix"))
+      .setDesc(t("Image size suffix Description"))
+      .addText(text => text.setValue(this.plugin.settings.imageSizeSuffix)
+        .onChange(async value => {
+          this.plugin.settings.imageSizeSuffix = value;
+          await this.plugin.saveSettings();
+        }));
   }
 }

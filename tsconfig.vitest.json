@@ -2,9 +2,9 @@
   "compilerOptions": {
     // "composite": true,
     "outDir": "./lib",
-    "rootDir": "./src",
+    "rootDir": ".",
     "target": "es2023",
-    "module": "Node16",
+    "module": "ESNext",
     "moduleResolution": "Bundler",
     "noEmit": true,
     "esModuleInterop": true,

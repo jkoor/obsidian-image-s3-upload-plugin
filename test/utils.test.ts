@@ -1,57 +1,24 @@
-// @vitest-environment jsdom
+import { describe, expect, it } from "vitest";
+import { getUrlAsset, imageFormat, isAnImage, isAssetTypeAnImage, safeDecode } from "../src/utils";
 
-import { describe, it, expect } from "vitest";
-import {
-  isAnImage,
-  isAssetTypeAnImage,
-  streamToString,
-  getUrlAsset,
-  getLastImage,
-  arrayToObject,
-  bufferToArrayBuffer,
-} from "../src/utils";
-import { Readable } from "stream";
-// import { clipboard } from "electron";
-
-describe("utils tests", () => {
-  it("should check if a file extension is an image", () => {
-    expect(isAnImage(".png")).toBe(true);
+describe("portable image utilities", () => {
+  it("recognizes supported image extensions case-insensitively", () => {
+    expect(isAnImage(".PNG")).toBe(true);
     expect(isAnImage(".txt")).toBe(false);
+    expect(isAssetTypeAnImage("folder/image.avif")).toBe(true);
+    expect(isAssetTypeAnImage("folder.png/note.md")).toBe(false);
   });
-
-  it("should check if a file path is an image", () => {
-    expect(isAssetTypeAnImage("image.png")).toBe(true);
-    expect(isAssetTypeAnImage("document.txt")).toBe(false);
+  it("extracts names without query strings or fragments", () => {
+    expect(getUrlAsset("https://example.com/path/image.png?query=123#fragment")).toBe("image.png");
+    expect(safeDecode("image%20name.png")).toBe("image name.png");
+    expect(safeDecode("bad%name.png")).toBe("bad%name.png");
   });
-
-  it("should convert stream to string", async () => {
-    const stream = Readable.from(["hello", " ", "world"]);
-    const result = await streamToString(stream);
-    expect(result).toBe("hello world");
-  });
-
-  it("should get URL asset", () => {
-    const url = "http://example.com/path/to/image.png?query=123#fragment";
-    const asset = getUrlAsset(url);
-    expect(asset).toBe("image.png");
-  });
-
-  it("should convert array to object", () => {
-    const arr = [
-      { id: 1, name: "Alice" },
-      { id: 2, name: "Bob" },
-    ];
-    const obj = arrayToObject(arr, "id");
-    expect(obj).toEqual({
-      "1": { id: 1, name: "Alice" },
-      "2": { id: 2, name: "Bob" },
-    });
-  });
-
-  it("should convert buffer to array buffer", () => {
-    const buffer = Buffer.from([1, 2, 3]);
-    const arrayBuffer = bufferToArrayBuffer(buffer);
-    expect(arrayBuffer.byteLength).toBe(3);
-    expect(new Uint8Array(arrayBuffer)).toEqual(new Uint8Array([1, 2, 3]));
+  it("detects binary image types instead of trusting extensions and MIME", () => {
+    expect(imageFormat(new Uint8Array([255, 216, 255, 0]).buffer, "image/png", "wrong.png")).toEqual({ ext: "jpg", mime: "image/jpeg" });
+    expect(imageFormat(new TextEncoder().encode("GIF89a...").buffer)).toEqual({ ext: "gif", mime: "image/gif" });
+    expect(imageFormat(new TextEncoder().encode("RIFFxxxxWEBP").buffer)?.ext).toBe("webp");
+    expect(imageFormat(new TextEncoder().encode("\uFEFF<?xml version='1.0'?><svg xmlns='http://www.w3.org/2000/svg'></svg>").buffer)?.ext).toBe("svg");
+    expect(imageFormat(new TextEncoder().encode("<html>login required</html>").buffer, "image/png", "fake.png")).toBeUndefined();
+    expect(imageFormat(new ArrayBuffer(0))).toBeUndefined();
   });
 });

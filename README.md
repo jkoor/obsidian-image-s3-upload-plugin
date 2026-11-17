@@ -1,82 +1,70 @@
 [中文文档](readme-zh.md)
 
-# Obsidian Image Auto Upload Plugin
+# Obsidian Image Auto Upload — S3
 
-This is a tool that supports uploading images to image beds using PicGo, PicList, and PicGo-Core.
-**Remember to restart Obsidian after updating the plugin.**
+Upload images directly to AWS S3 or S3-compatible object storage. No PicGo, desktop helper, or upload server is required. Requires Obsidian **1.7.2 or later**.
 
-**Not tested on Mac**
+## Setup
 
-# Start
+Install this plugin's `main.js` and `manifest.json` in `.obsidian/plugins/obsidian-image-auto-upload-plugin/`, enable it, and open its settings.
 
-1. Install the PicGo tool and configure it, refer to the [official website](https://github.com/Molunerfinn/PicGo)
-2. Enable PicGo's Server service and remember the port number
-3. Install the plugin
-4. Open the plugin settings and set it to `http://127.0.0.1:{{port set in PicGo}}/upload` (e.g., `http://127.0.0.1:36677/upload`)
-5. Try to see if the upload is successful
+| Setting | Example / meaning |
+| --- | --- |
+| Endpoint | `https://s3.ap-southeast-1.amazonaws.com` — S3 API base, without the bucket |
+| Region | `ap-southeast-1`; use the region required by your provider |
+| Bucket | Your existing image bucket |
+| Access Key ID / Secret Access Key | Credentials allowed to write to that bucket/prefix |
+| Session Token | Optional, for temporary credentials; update manually when they expire |
+| Public base URL | `https://images.example.com` — a stable URL mapping to the **bucket root**, including any CDN path |
+| Object prefix | `obsidian` by default |
+| Path-style addressing | Off for `bucket.endpoint/key`; on for `endpoint/bucket/key` |
 
-## Set picbed and configName
+For MinIO on a local host, use its S3 API endpoint, its configured region, and enable path style. Use HTTPS for public services. S3-compatible services differ; verify your provider with a test image.
 
-If you are using PicList (version >= 2.5.3), you can set the picbed and configName through URL parameters.
-Example: `http://127.0.0.1:36677/upload?picbed=smms&configName=piclist`
-This will upload the image to the `smms` picbed and use the piclist configName.
-Using this feature, you can upload images to different picbeds in different Obsidian vaults.
+Objects are stored as `obsidian/YYYY/MM/<random-id>.<actual-format>`. A public base URL of `https://images.example.com` produces links such as `https://images.example.com/obsidian/2026/11/<id>.png`. Include the bucket in the public base URL if your serving endpoint requires it.
 
-# Features
+Uploading **does not make an object publicly readable**. Configure a read policy for the image prefix or a CDN that can access your bucket. A private object URL returns 403. Expiring presigned GET URLs are not used as permanent image links; object ACLs are not set.
 
-## Upload when paste image
+Credentials are stored **unencrypted** in the plugin's `data.json` and may be included in vault synchronization or backups. Use a dedicated credential limited to `s3:PutObject` on your image prefix. Remote deletion/listing is not required. Some encryption configurations, such as SSE-KMS, need additional permissions. Password fields only hide the value on screen.
 
-When you paste an image to Obsidian, this plugin will automatically upload your image.
+## Features
 
-You can set `image-auto-upload: false` in `frontmatter` to control one file.
+- Paste screenshots or multiple image files to upload and insert Markdown links. Enable the mixed text/image clipboard option for applications that provide both representations.
+- Drag image files into the editor. Hold Ctrl to retain Obsidian's normal drop behavior. Mixed image/non-image drops use Obsidian's normal behavior.
+- Run **Upload all images** to process image references in the **current note**, including Markdown and Wiki embeds. It does not upload the entire vault.
+- Enable **Work on network** to transfer HTTP(S) images when pasting Markdown image links or running Upload all images. This is off by default. Excluded domains and their subdomains are skipped; your configured public image URL path is also skipped.
+- Repeated references to the same source upload once per batch. Failures keep the original note references. Code examples, inline code, comments and frontmatter are excluded.
+- Right-click an image file to upload references in the current note; if there are none, upload and copy its URL. If clipboard access is unavailable, the URL is displayed instead.
+- **Download all images** saves network images to the attachment location configured in Obsidian, then replaces their references after successful writes.
+- Image descriptions and Wiki size suffixes are preserved according to settings.
 
-Supports ".png", ".jpg", ".jpeg", ".bmp", ".gif", ".svg", ".tiff", ".webp", ".avif"
-
-Due to the [bug](https://github.com/renmu123/obsidian-image-auto-upload-plugin/issues/2) in PicGo 2.3.0-beta7, you cannot use this feature. Please install another version of PicGo.
+Disable automatic paste/drop upload for an individual note:
 
 ```yaml
 ---
-image-auto-upload: true
+image-auto-upload: false
 ---
 ```
 
-## Upload all local images file by command
+If S3 is not configured, ordinary paste/drop remains available. Each pasted image gets its own upload placeholder. On failure, paste the original image again to retry. Successful uploads may remain in the bucket if their note reference was removed before completion.
 
-press `ctrl+P` and input `upload all images`，enter, then will auto upload all local images
+**Delete source file after upload** is off by default and reset to off when migrating from PicGo. When enabled, deletion uses Obsidian's trash only after link replacement and reference checks. Incomplete or stale metadata preserves the original. Non-Markdown consumers such as Canvas are not covered by these checks; keep deletion off when sharing attachments with them.
 
-## download all internet to local
+## Mobile support
 
-press `ctrl+P` and input `download all images`，enter, then will auto download all internet images to loacl, only test in win10
+The runtime uses Obsidian Vault/request APIs, File/Blob and Web Crypto; it does not require Node, Electron or absolute file paths. Paste/drop uploads work when the OS exposes image files to Obsidian. Otherwise save the image as a local attachment and run Upload all images. On mobile, use an endpoint reachable by the phone; `localhost` refers to the phone itself. Device clock errors can cause signature failures.
 
-## Upload image by contextMenu
+Android/iOS behavior still requires device testing. See [TESTING.md](TESTING.md) for acceptance steps and verification limits.
 
-Now you can upload image by contextMenu in edit mode.
+## Migration and development
 
-## Support drag-and-drop
+The plugin ID, command IDs, and frontmatter key are unchanged. General preferences are retained; old PicGo settings and remote-delete records are removed during migration. Existing note links are not rewritten. Remote object deletion is not part of this version.
 
-Only work for picgo or picList app.
+```sh
+pnpm install --frozen-lockfile
+pnpm run test
+pnpm run typecheck
+pnpm run build
+```
 
-## server mode
-
-You can deploy [PicList](https://github.com/Kuingsmile/PicList/releases) or [PicList-Core](https://github.com/Kuingsmile/PicList-Core) in your server and upload to it.
-
-Support [PicList](https://github.com/Kuingsmile/PicList/releases) 2.6.3 later or [PicList-Core](https://github.com/Kuingsmile/PicList-Core)1.3.0 later
-
-You can not upload network in this mode.
-If you upload fail when you paste img, you can alse try to enable the mode.
-
-## Support picgo-core
-
-You can install picgo-core with npm. Reference to [doc](https://picgo.github.io/PicGo-Core-Doc/)
-
-# TODO
-
-- [x] upload all local images file by command
-- [x] support yaml to config if upload image
-- [x] support picgo-core
-- [x] support upload image from system copy selected image
-- [x] support network image
-
-# Thanks
-
-[obsidian-imgur-plugin](https://github.com/gavvvr/obsidian-imgur-plugin)
+Build output: `main.js` and the source `manifest.json`. Restart Obsidian after replacing plugin files. Never commit a vault's `data.json` or real test credentials.

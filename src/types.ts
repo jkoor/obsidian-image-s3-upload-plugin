@@ -6,3 +6,14 @@ export interface Image {
   source: string;
   file?: TFile | null;
 }
+
+export interface ImageReference extends Image {
+  start: number;
+  end: number;
+}
+
+export interface ImageData {
+  name: string;
+  contentType: string;
+  data: ArrayBuffer;
+}
