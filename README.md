@@ -6,7 +6,7 @@ Upload images directly to AWS S3 or S3-compatible object storage. No PicGo, desk
 
 ## Setup
 
-Install this plugin's `main.js` and `manifest.json` in `.obsidian/plugins/image-s3-upload/`, enable **image-s3-upload**, and open its settings.
+Install this plugin's `main.js` and `manifest.json` in `.obsidian/plugins/image-s-three-upload/`, enable **image-s3-upload**, and open its settings.
 
 | Setting | Example / meaning |
 | --- | --- |
@@ -61,7 +61,7 @@ Android/iOS behavior still requires device testing. See [TESTING.md](TESTING.md)
 
 ## Migration and development
 
-This fork uses the plugin ID `image-s3-upload`. When moving from the original plugin, disable it and install image-s3-upload in the new directory. To retain general preferences, copy the original plugin's `data.json` to the new directory before enabling it. Old PicGo settings and remote-delete records are removed when settings are loaded; configure S3 separately. Command IDs and the `image-auto-upload` frontmatter key are retained. Existing note links are not rewritten. Remote object deletion is not part of this version.
+Starting with 5.0.2, this fork uses the plugin ID `image-s-three-upload`; the display name remains `image-s3-upload`. Obsidian community plugin IDs cannot contain digits. When moving from the original plugin or version 5.0.1 (ID `image-s3-upload`), disable the old plugin and install this version in the new directory. To retain general preferences, copy the original plugin's `data.json` to the new directory before enabling it. Old PicGo settings and remote-delete records are removed when settings are loaded; configure S3 separately. Command IDs and the `image-auto-upload` frontmatter key are retained. Existing note links are not rewritten. Remote object deletion is not part of this version.
 
 ```sh
 pnpm install --frozen-lockfile
@@ -76,17 +76,17 @@ Build output: `main.js` and the source `manifest.json`. Restart Obsidian after r
 
 Use Node.js 24 and the pnpm version pinned in `package.json`. Pushes and pull requests run tests, version validation, type checks and a build; the **Check plugin** workflow also stores the plugin files as a build artifact.
 
-1. Set the same `major.minor.patch` version in `package.json` and `manifest.json` (currently `5.0.1`). Add that version and its minimum Obsidian version to `versions.json`, and update `CHANGELOG.md`.
+1. Set the same `major.minor.patch` version in `package.json` and `manifest.json` (currently `5.0.2`). Add that version and its minimum Obsidian version to `versions.json`, and update `CHANGELOG.md`.
 2. Run `pnpm run test` and `pnpm run build`, then commit and push the changes.
 3. Create and push a tag matching the version exactly, **without a `v` prefix**:
 
    ```sh
-   git tag 5.0.1
-   git push origin 5.0.1
+   git tag 5.0.2
+   git push origin 5.0.2
    ```
 
-4. The **Release plugin** workflow publishes a **GitHub Release** after tests and builds pass with `main.js`, `manifest.json`, optional `styles.css`, and `image-s3-upload-5.0.1.zip`. Release notes come from the matching entry in `CHANGELOG.md`.
+4. The **Release plugin** workflow publishes a **GitHub Release** after tests and builds pass with `main.js`, `manifest.json`, optional `styles.css`, and `image-s-three-upload-5.0.2.zip`. Release notes come from the matching entry in `CHANGELOG.md`.
 
 You can also run **Actions → Release plugin → Run workflow**, entering an existing version tag. Manual runs create a draft by default; select **publish** to publish immediately. The workflow checks out that tag and verifies it against the version files. Reruns can replace assets on a draft; published releases are protected from replacement. The repository's built-in `GITHUB_TOKEN` supplies release permissions; no personal token or additional secret is needed. GitHub Actions must be enabled in the repository.
 
-For manual installation, download `main.js` and `manifest.json` from the release into the plugin directory, or extract the ZIP into `.obsidian/plugins/`. Keep the plugin directory named `image-s3-upload`.
+For manual installation, download `main.js` and `manifest.json` from the release into the plugin directory, or extract the ZIP into `.obsidian/plugins/`. Keep the plugin directory named `image-s-three-upload`.

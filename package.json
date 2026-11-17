@@ -1,6 +1,6 @@
 {
   "name": "image-s3-upload",
-  "version": "5.0.1",
+  "version": "5.0.2",
   "type": "module",
   "description": "Upload local and remote images directly to S3-compatible storage in Obsidian",
   "main": "main.js",

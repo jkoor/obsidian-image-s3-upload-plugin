@@ -20,8 +20,8 @@ if (pkg.version !== manifest.version) {
 if (versions[manifest.version] !== manifest.minAppVersion) {
   fail("versions.json must map the current version to manifest.json minAppVersion.");
 }
-if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(manifest.id)) {
-  fail("manifest.json id must be a safe plugin directory name.");
+if (!/^[a-z]+(?:-[a-z]+)*$/.test(manifest.id) || manifest.id.includes("obsidian") || manifest.id.endsWith("plugin")) {
+  fail("manifest.json id must contain only lowercase letters and hyphens, must not contain 'obsidian', and must not end with 'plugin'.");
 }
 if (tag !== undefined && tag !== manifest.version) {
   fail(`Release tag must be exactly ${manifest.version}, without a v prefix; received ${tag}.`);

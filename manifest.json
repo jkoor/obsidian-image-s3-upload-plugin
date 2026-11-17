@@ -1,7 +1,7 @@
 {
-  "id": "image-s3-upload",
+  "id": "image-s-three-upload",
   "name": "image-s3-upload",
-  "version": "5.0.1",
+  "version": "5.0.2",
   "minAppVersion": "1.7.2",
   "description": "Upload clipboard, local and remote images directly to S3-compatible storage",
   "author": "Hardy",

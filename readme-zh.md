@@ -4,7 +4,7 @@
 
 ## 配置
 
-将构建的 `main.js` 和 `manifest.json` 放入库内 `.obsidian/plugins/image-s3-upload/`，启用 **image-s3-upload** 并打开设置。
+将构建的 `main.js` 和 `manifest.json` 放入库内 `.obsidian/plugins/image-s-three-upload/`，启用 **image-s3-upload** 并打开设置。
 
 | 配置 | 说明 |
 | --- | --- |
@@ -56,7 +56,7 @@ S3 配置不完整时不拦截普通粘贴/拖拽。粘贴图片失败后，请�
 
 ## 迁移与构建
 
-此分支使用插件 ID `image-s3-upload`。从原版迁移时，请先禁用原插件，再将 image-s3-upload 安装到新目录。如需保留通用偏好，可在启用前将原插件的 `data.json` 复制到新目录。加载设置时会移除 PicGo 专用配置和历史删除记录，S3 需要单独配置。保留原命令 ID 和 `image-auto-upload` frontmatter 字段，不改写已有笔记链接。本版本不提供 S3 远程删除。
+从 5.0.2 起，此分支使用插件 ID `image-s-three-upload`，显示名称仍为 `image-s3-upload`。Obsidian 社区插件 ID 不允许包含数字。从原版或 5.0.1（ID 为 `image-s3-upload`）迁移时，请先禁用旧插件，再将此版本安装到新目录。如需保留通用偏好，可在启用前将原插件的 `data.json` 复制到新目录。加载设置时会移除 PicGo 专用配置和历史删除记录，S3 需要单独配置。保留原命令 ID 和 `image-auto-upload` frontmatter 字段，不改写已有笔记链接。本版本不提供 S3 远程删除。
 
 ```sh
 pnpm install --frozen-lockfile
@@ -71,17 +71,17 @@ pnpm run build
 
 使用 Node.js 24 和 `package.json` 中锁定的 pnpm 版本。推送分支或提交 PR 后，**Check plugin** 工作流会执行测试、版本检查、类型检查和构建，并保留插件构建产物供下载。
 
-1. 将 `package.json` 和 `manifest.json` 的版本号统一为 `主版本.次版本.修订版本`（当前为 `5.0.1`），在 `versions.json` 中添加对应的最低 Obsidian 版本，并更新 `CHANGELOG.md`。
+1. 将 `package.json` 和 `manifest.json` 的版本号统一为 `主版本.次版本.修订版本`（当前为 `5.0.2`），在 `versions.json` 中添加对应的最低 Obsidian 版本，并更新 `CHANGELOG.md`。
 2. 执行 `pnpm run test` 和 `pnpm run build`，提交并推送修改。
 3. 创建并推送与版本号完全一致的标签，**不要添加 `v` 前缀**：
 
    ```sh
-   git tag 5.0.1
-   git push origin 5.0.1
+   git tag 5.0.2
+   git push origin 5.0.2
    ```
 
-4. **Release plugin** 工作流会在测试和构建通过后自动正式发布 GitHub Release，附带 `main.js`、`manifest.json`、可选的 `styles.css` 和 `image-s3-upload-5.0.1.zip`。发布说明取自 `CHANGELOG.md` 中对应版本的条目。
+4. **Release plugin** 工作流会在测试和构建通过后自动正式发布 GitHub Release，附带 `main.js`、`manifest.json`、可选的 `styles.css` 和 `image-s-three-upload-5.0.2.zip`。发布说明取自 `CHANGELOG.md` 中对应版本的条目。
 
 也可以进入 **Actions → Release plugin → Run workflow**，填写已存在的版本标签手动运行。手动运行默认创建草稿，勾选 **publish** 可立即正式发布。工作流会检出该标签并验证版本一致性；重复执行可以更新草稿附件，已发布版本的附件禁止覆盖。发布权限使用仓库自带的 `GITHUB_TOKEN`，无需配置个人 Token 或额外 Secret，但需要在仓库中启用 GitHub Actions。
 
-手动安装时，将 Release 的 `main.js` 和 `manifest.json` 下载到插件目录，或将 ZIP 解压到 `.obsidian/plugins/`。插件目录名保持为 `image-s3-upload`。
+手动安装时，将 Release 的 `main.js` 和 `manifest.json` 下载到插件目录，或将 ZIP 解压到 `.obsidian/plugins/`。插件目录名保持为 `image-s-three-upload`。

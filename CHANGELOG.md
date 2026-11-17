@@ -1,3 +1,9 @@
+# 5.0.2
+
+- Change the internal plugin ID to `image-s-three-upload` to meet Obsidian's manifest rules, which do not allow digits in IDs. Keep the display name `image-s3-upload`.
+- Validate community plugin ID rules during builds to prevent invalid IDs from being released again.
+- Update installation paths and release archive names, and document migration from earlier plugin IDs.
+
 # 5.0.1
 
 - Use `image-s3-upload` consistently for the plugin name, plugin ID and package name.
