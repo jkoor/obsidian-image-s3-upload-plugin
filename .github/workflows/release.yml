@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "Existing version tag, without a v prefix (for example, 5.0.2)"
+        description: "Existing version tag, without a v prefix (for example, 5.0.3)"
         required: true
         type: string
       publish:
@@ -27,6 +27,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      id-token: write
+      attestations: write
     env:
       RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
       GH_TOKEN: ${{ github.token }}
@@ -51,24 +53,23 @@ jobs:
         run: node scripts/check-version.mjs "$RELEASE_TAG"
 
       - run: pnpm install --frozen-lockfile
+      - run: pnpm run lint
       - run: pnpm run test
       - run: pnpm run build
+      - run: pnpm run check:build
 
-      - name: Package plugin
-        shell: bash
-        run: |
-          PLUGIN_ID=$(node -p "JSON.parse(require('fs').readFileSync('manifest.json', 'utf8')).id")
-          mkdir -p "dist/$PLUGIN_ID"
-          cp main.js manifest.json "dist/$PLUGIN_ID/"
-          if [ -f styles.css ]; then
-            cp styles.css "dist/$PLUGIN_ID/"
-          fi
-          (cd dist && zip -r "../$PLUGIN_ID-$RELEASE_TAG.zip" "$PLUGIN_ID")
+      - name: Attest plugin assets
+        uses: actions/attest-build-provenance@v3
+        with:
+          subject-path: |
+            main.js
+            manifest.json
+            styles.css
 
       - name: Create or update release
         shell: bash
         run: |
-          assets=(main.js manifest.json ./*-"$RELEASE_TAG".zip)
+          assets=(main.js manifest.json)
           if [ -f styles.css ]; then
             assets+=(styles.css)
           fi

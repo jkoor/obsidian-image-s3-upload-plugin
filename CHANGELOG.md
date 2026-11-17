@@ -1,3 +1,13 @@
+# 5.0.3
+
+- Address community review errors by using Obsidian setting headings and CSS classes.
+- Add searchable setting definitions for Obsidian 1.13+ while keeping the settings UI compatible with 1.7.2.
+- Validate saved configuration as unknown input; fix unsafe typing, regular expressions, and window timer/crypto compatibility.
+- Add the official Obsidian ESLint rules to local checks and CI.
+- Correct manifest punctuation and the author profile URL.
+- Release only supported plugin files, attest their build provenance, and verify reproducible bundles from the committed lockfile without embedded source maps.
+- Document when vault enumeration and clipboard access occur.
+
 # 5.0.2
 
 - Change the internal plugin ID to `image-s-three-upload` to meet Obsidian's manifest rules, which do not allow digits in IDs. Keep the display name `image-s3-upload`.

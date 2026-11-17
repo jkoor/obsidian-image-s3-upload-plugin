@@ -17,7 +17,7 @@ export async function fingerprint(data: ArrayBuffer): Promise<string> {
 export class SourceCleanup {
   private snapshots = new Map<TFile, { data: string; cache: CachedMetadata }>();
   private event: EventRef;
-  private timer: ReturnType<typeof setTimeout>;
+  private timer: number;
   private wake: () => void;
   private disposed = false;
 
@@ -33,7 +33,7 @@ export class SourceCleanup {
     if (this.snapshots.get(this.target.file)?.data === expected) return true;
     return new Promise(resolve => {
       const finish = (success: boolean) => {
-        clearTimeout(this.timer);
+        window.clearTimeout(this.timer);
         this.wake = undefined;
         resolve(success);
       };
@@ -41,7 +41,7 @@ export class SourceCleanup {
         if (this.disposed) finish(false);
         else if (this.snapshots.get(this.target.file)?.data === expected) finish(true);
       };
-      this.timer = setTimeout(() => finish(false), 3000);
+      this.timer = window.setTimeout(() => finish(false), 3000);
     });
   }
 
@@ -102,7 +102,7 @@ export class SourceCleanup {
     if (this.disposed) return;
     this.disposed = true;
     this.wake?.();
-    clearTimeout(this.timer);
+    window.clearTimeout(this.timer);
     this.app.metadataCache.offref(this.event);
   }
 }

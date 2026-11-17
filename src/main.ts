@@ -6,7 +6,7 @@ import type { TaskResult } from "./uploader";
 import type { Image } from "./types";
 import { SettingTab, migrateSettings } from "./setting";
 import type { PluginSettings } from "./setting";
-import { isAssetTypeAnImage, isNetworkUrl, uuid } from "./utils";
+import { isAssetTypeAnImage, isNetworkUrl, isRecord, uuid } from "./utils";
 import { isOwnImage } from "./uploader/s3";
 import { readBlob, readVaultImage, downloadImage } from "./images";
 import { updateDocument, targetEditor } from "./document";
@@ -25,7 +25,7 @@ interface SourceGroup {
 }
 
 export default class ImageAutoUploadPlugin extends Plugin {
-  settings: PluginSettings;
+  declare settings: PluginSettings;
   helper: Helper;
   private batches = new Set<TFile>();
   private stopped = false;
@@ -39,9 +39,9 @@ export default class ImageAutoUploadPlugin extends Plugin {
   }
 
   async loadSettings() {
-    const saved = await this.loadData();
+    const saved: unknown = await this.loadData();
     this.settings = migrateSettings(saved);
-    if (saved?.settingsVersion !== this.settings.settingsVersion) await this.saveSettings();
+    if (!isRecord(saved) || saved.settingsVersion !== this.settings.settingsVersion) await this.saveSettings();
   }
   async saveSettings() { await this.saveData(this.settings); }
 
@@ -315,7 +315,7 @@ export default class ImageAutoUploadPlugin extends Plugin {
   }
   markdown(name: string, url: string) {
     const alt = this.handleName(name).replace(/[\r\n]/g, " ")
-      .replace(/(\\*)([\[\]])/g, (_match, slashes: string, bracket: string) => slashes + (slashes.length % 2 ? "" : "\\") + bracket);
+      .replace(/(\\*)([[\]])/g, (_match, slashes: string, bracket: string) => slashes + (slashes.length % 2 ? "" : "\\") + bracket);
     return `![${alt}](${url})`;
   }
   private summary(success: number, failed: number, skipped: number, unit: "files" | "references") {

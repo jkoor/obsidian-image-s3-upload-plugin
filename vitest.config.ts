@@ -3,6 +3,7 @@ import { resolve } from "path";
 
 export default defineConfig({
   test: {
+    setupFiles: ["./test/setup.ts"],
     typecheck: {
       tsconfig: "tsconfig.vitest.json",
     },

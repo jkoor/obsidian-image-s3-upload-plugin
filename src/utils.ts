@@ -1,4 +1,4 @@
-const FORMATS: Record<string, string> = {
+const FORMATS: Record<string, string | undefined> = {
   png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", gif: "image/gif",
   bmp: "image/bmp", svg: "image/svg+xml", tiff: "image/tiff", tif: "image/tiff",
   webp: "image/webp", avif: "image/avif",
@@ -9,11 +9,15 @@ export function isAnImage(ext: string): boolean {
 }
 
 export function isAssetTypeAnImage(path: string): boolean {
-  return isAnImage(/\.[^.\/]+$/.exec(path)?.[0] || "");
+  return isAnImage(/\.[^./]+$/.exec(path)?.[0] || "");
 }
 
 export function mimeForName(name: string): string {
-  return FORMATS[/\.([^.\/]+)$/.exec(name)?.[1]?.toLowerCase()] || "application/octet-stream";
+  return FORMATS[/\.([^./]+)$/.exec(name)?.[1]?.toLowerCase()] || "application/octet-stream";
+}
+
+export function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 /** Detect bytes rather than renaming every pasted file to PNG or trusting a URL. */

@@ -5,7 +5,7 @@ export type { UploadedObject, Uploader, TaskResult } from "./types";
 export async function mapConcurrent<T, R>(
   items: T[], task: (item: T, index: number) => Promise<R>, concurrency = 3
 ): Promise<R[]> {
-  const results: R[] = new Array(items.length);
+  const results = new Array<R>(items.length);
   let next = 0;
   await Promise.all(Array.from({ length: Math.min(concurrency, items.length) }, async () => {
     while (next < items.length) {

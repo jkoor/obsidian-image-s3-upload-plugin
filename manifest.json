@@ -1,10 +1,10 @@
 {
   "id": "image-s-three-upload",
   "name": "image-s3-upload",
-  "version": "5.0.2",
+  "version": "5.0.3",
   "minAppVersion": "1.7.2",
-  "description": "Upload clipboard, local and remote images directly to S3-compatible storage",
+  "description": "Upload clipboard, local and remote images directly to S3-compatible storage.",
   "author": "Hardy",
-  "authorUrl": "https://github.com/jkoor/obsidian-image-s3-upload-plugin",
+  "authorUrl": "https://github.com/jkoor",
   "isDesktopOnly": false
 }

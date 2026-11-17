@@ -75,7 +75,7 @@ export class S3Uploader implements Uploader {
   constructor(settings: S3Settings) {
     this.settings = { ...settings };
     validateS3(this.settings);
-    if (!globalThis.crypto?.subtle || !globalThis.crypto?.getRandomValues || typeof Request === "undefined" || typeof Headers === "undefined") {
+    if (!window.crypto?.subtle || !window.crypto?.getRandomValues || typeof Request === "undefined" || typeof Headers === "undefined") {
       throw new Error("S3 upload requires Web Crypto, Request and Headers support in this Obsidian runtime");
     }
   }
@@ -117,7 +117,7 @@ export class S3Uploader implements Uploader {
           throw new Error("S3 network or signing request failed. Check endpoint, connection and device clock.");
         }
       }
-      await new Promise(resolve => setTimeout(resolve, 400 * 2 ** attempt + Math.random() * 200));
+      await new Promise<void>(resolve => window.setTimeout(resolve, 400 * 2 ** attempt + Math.random() * 200));
     }
     throw new Error("S3 upload failed");
   }

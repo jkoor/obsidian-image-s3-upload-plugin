@@ -4,7 +4,7 @@
 
 ## 配置
 
-将构建的 `main.js` 和 `manifest.json` 放入库内 `.obsidian/plugins/image-s-three-upload/`，启用 **image-s3-upload** 并打开设置。
+将构建的 `main.js`、`manifest.json` 和 `styles.css` 放入库内 `.obsidian/plugins/image-s-three-upload/`，启用 **image-s3-upload** 并打开设置。
 
 | 配置 | 说明 |
 | --- | --- |
@@ -60,28 +60,38 @@ S3 配置不完整时不拦截普通粘贴/拖拽。粘贴图片失败后，请�
 
 ```sh
 pnpm install --frozen-lockfile
+pnpm run lint
 pnpm run test
 pnpm run typecheck
 pnpm run build
+pnpm run check:build
 ```
 
 更新插件文件后重启 Obsidian。不要提交真实凭据或库内 `data.json`。
 
 ## 发布插件
 
-使用 Node.js 24 和 `package.json` 中锁定的 pnpm 版本。推送分支或提交 PR 后，**Check plugin** 工作流会执行测试、版本检查、类型检查和构建，并保留插件构建产物供下载。
+使用 `.node-version` 中锁定的 Node.js 24.12.0 和 `package.json` 中锁定的 pnpm 版本。推送分支或提交 PR 后，**Check plugin** 工作流会执行官方 Obsidian ESLint 检查、测试、版本检查、类型检查、构建和重复构建一致性校验，并保留插件构建产物供下载。正式构建不内嵌 source map，避免机器路径造成产物差异。
 
-1. 将 `package.json` 和 `manifest.json` 的版本号统一为 `主版本.次版本.修订版本`（当前为 `5.0.2`），在 `versions.json` 中添加对应的最低 Obsidian 版本，并更新 `CHANGELOG.md`。
-2. 执行 `pnpm run test` 和 `pnpm run build`，提交并推送修改。
+1. 将 `package.json` 和 `manifest.json` 的版本号统一为 `主版本.次版本.修订版本`（当前为 `5.0.3`），在 `versions.json` 中添加对应的最低 Obsidian 版本，并更新 `CHANGELOG.md`。
+2. 执行 `pnpm run lint`、`pnpm run test`、`pnpm run build` 和 `pnpm run check:build`，提交并推送修改。
 3. 创建并推送与版本号完全一致的标签，**不要添加 `v` 前缀**：
 
    ```sh
-   git tag 5.0.2
-   git push origin 5.0.2
+   git tag 5.0.3
+   git push origin 5.0.3
    ```
 
-4. **Release plugin** 工作流会在测试和构建通过后自动正式发布 GitHub Release，附带 `main.js`、`manifest.json`、可选的 `styles.css` 和 `image-s-three-upload-5.0.2.zip`。发布说明取自 `CHANGELOG.md` 中对应版本的条目。
+4. **Release plugin** 工作流会在检查通过后自动正式发布 GitHub Release，仅附带 Obsidian 支持的 `main.js`、`manifest.json` 和 `styles.css`，上传前通过 GitHub Actions 生成这些文件的构建来源证明。发布说明取自 `CHANGELOG.md` 中对应版本的条目。
 
 也可以进入 **Actions → Release plugin → Run workflow**，填写已存在的版本标签手动运行。手动运行默认创建草稿，勾选 **publish** 可立即正式发布。工作流会检出该标签并验证版本一致性；重复执行可以更新草稿附件，已发布版本的附件禁止覆盖。发布权限使用仓库自带的 `GITHUB_TOKEN`，无需配置个人 Token 或额外 Secret，但需要在仓库中启用 GitHub Actions。
 
-手动安装时，将 Release 的 `main.js` 和 `manifest.json` 下载到插件目录，或将 ZIP 解压到 `.obsidian/plugins/`。插件目录名保持为 `image-s-three-upload`。
+手动安装时，将 Release 的 `main.js`、`manifest.json` 和 `styles.css` 下载到插件目录。插件目录名保持为 `image-s-three-upload`。在 Obsidian 1.13 及以上版本中，插件设置也可通过设置搜索找到；旧版本保留兼容设置页。
+
+重新送审前，请在 GitHub 仓库 **Settings → General → Features → Issues** 启用问题反馈。发布 5.0.3 后审核服务可自动重新扫描，也可以先使用 **Review branch**。逐项处理记录和仍需在线验证的项目见 [REVIEW_FIXES.md](REVIEW_FIXES.md)。
+
+## 数据访问范围
+
+插件只在符合上传条件的 Markdown 编辑器粘贴事件中读取所粘贴的图片和文本，不会在后台轮询或读取系统剪贴板。用户通过文件菜单上传图片、且没有替换当前笔记图片引用时，会尝试将上传 URL 写入剪贴板。
+
+只有启用默认关闭的“上传后删除源文件”时，清理流程才会枚举并读取库内 Markdown 笔记，以检查图片是否仍被引用。常规上传仅处理选定笔记及其引用图片。图片数据发送至你配置的 S3 endpoint；远程图片转存和公开访问测试还会访问相应图片 URL。

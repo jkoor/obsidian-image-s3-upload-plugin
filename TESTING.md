@@ -2,7 +2,7 @@
 
 ## Automated checks
 
-Run `pnpm run test`, `pnpm run typecheck`, and `pnpm run build`.
+Run `pnpm run lint`, `pnpm run test`, `pnpm run build`, and `pnpm run check:build`. The build includes type checking. ESLint uses the official Obsidian recommended rules and fails on warnings. The repeat-build check compares `main.js` with a fresh Rollup build and rejects runtime dependencies other than `obsidian`.
 
 Tests use fake credentials and mocked Obsidian transport. The outgoing SigV4 request is independently checked with Node's crypto primitives, including a Unicode/special-character object prefix, payload hash and temporary credentials. Workflow tests cover source deduplication, partial failure, editor changes, binary File input and awaited attachment writes. No test uses real storage credentials.
 
@@ -25,6 +25,8 @@ node -e "const fs=require('node:fs');const s=fs.readFileSync('main.js','utf8');c
 9. Leave source deletion off initially. If testing it, use disposable attachments and verify other Markdown references and unavailable metadata prevent deletion.
 
 ## New feature acceptance
+
+On Obsidian 1.7.2, verify the fallback settings page displays all controls and connection-test status. On 1.13 or later, search for Endpoint, Bucket and source cleanup in settings, open the matching result, change a setting, restart, and confirm persistence. While a connection test is running, change the search or reopen settings; verify the current status and button recover when the test completes.
 
 1. In settings, click **Test connection** with valid configuration. Verify separate upload and public-access success messages and locate the retained tiny PNG using the displayed key. No list or delete permission is needed. Try a wrong public base URL/read policy: upload must still report success while access fails. Try invalid credentials: access must not be tested. Rapid clicks must launch only one test; changing settings during a test must not change that test's configuration.
 2. Open a note's top-right **More options → Upload images in this note**, in both reading and editing modes. Verify only that note is processed, including when another tab becomes active. Trigger again during upload and verify the existing-task message. Test desktop and mobile menus.

@@ -1,6 +1,6 @@
 {
   "name": "image-s3-upload",
-  "version": "5.0.2",
+  "version": "5.0.3",
   "type": "module",
   "description": "Upload local and remote images directly to S3-compatible storage in Obsidian",
   "main": "main.js",
@@ -8,6 +8,8 @@
     "dev": "rollup --config rollup.config.js -w",
     "build": "pnpm run check:version && pnpm run typecheck && rollup --config rollup.config.js",
     "check:version": "node scripts/check-version.mjs",
+    "check:build": "node scripts/check-build.mjs",
+    "lint": "eslint . --max-warnings 0",
     "typecheck": "tsc --noEmit -p tsconfig.json --composite false && tsc --noEmit -p tsconfig.vitest.json",
     "test": "vitest run"
   },
@@ -18,18 +20,24 @@
   "author": "renmu",
   "license": "MIT",
   "devDependencies": {
+    "@codemirror/state": "6.7.6",
+    "@codemirror/view": "6.43.13",
+    "@eslint/js": "^9",
     "@rollup/plugin-commonjs": "^28.0.1",
     "@rollup/plugin-json": "^6.1.0",
     "@rollup/plugin-node-resolve": "^15.3.0",
     "@rollup/plugin-typescript": "^12.1.1",
     "@types/node": "20.17.6",
     "@types/path-browserify": "^1.0.3",
+    "eslint": "^9",
+    "eslint-plugin-obsidianmd": "^0.6.0",
     "jsdom": "^25.0.1",
-    "obsidian": "^1.7.2",
+    "obsidian": "^1.14.4",
     "path-browserify": "^1.0.1",
     "rollup": "^4.27.3",
     "tslib": "^2.8.1",
     "typescript": "^5.6.3",
+    "typescript-eslint": "^8.73.0",
     "vitest": "^2.1.5"
   },
   "dependencies": {

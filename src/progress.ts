@@ -4,7 +4,7 @@ import { t } from "./lang/helpers";
 /** Counts actual upload tasks, independently of the number of note references. */
 export class UploadProgress {
   private notice: Notice;
-  private timer: ReturnType<typeof setTimeout>;
+  private timer: number;
   private closed = false;
   private completed = 0;
   private failed = 0;
@@ -25,12 +25,12 @@ export class UploadProgress {
   finish(summary: string) {
     if (this.closed) return;
     this.notice.setMessage(`${this.label}\n${summary}`);
-    this.timer = setTimeout(() => this.close(), 6000);
+    this.timer = window.setTimeout(() => this.close(), 6000);
   }
   close() {
     if (this.closed) return;
     this.closed = true;
-    clearTimeout(this.timer);
+    window.clearTimeout(this.timer);
     this.notice.hide();
     this.release();
   }

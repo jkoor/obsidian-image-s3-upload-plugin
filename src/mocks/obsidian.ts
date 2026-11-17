@@ -61,8 +61,13 @@ export class Setting {
   name: string;
   description: string;
   button: any;
-  constructor(_container: unknown) { Setting.instances.push(this); }
+  descEl: any;
+  constructor(container: any) {
+    this.descEl = container;
+    Setting.instances.push(this);
+  }
   setName(name: string) { this.name = name; return this; }
+  setHeading() { return this; }
   setDesc(description: string) { this.description = description; return this; }
   addButton(callback: (button: any) => unknown) {
     const button: any = {

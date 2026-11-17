@@ -1,7 +1,9 @@
 import { App, PluginSettingTab, Setting } from "obsidian";
+import type { ButtonComponent, SettingDefinitionItem } from "obsidian";
 import type ImageAutoUploadPlugin from "./main";
 import { t } from "./lang/helpers";
 import { testConnection } from "./connection";
+import { isRecord } from "./utils";
 
 export interface S3Settings {
   endpoint: string;
@@ -44,34 +46,60 @@ export const DEFAULT_SETTINGS: PluginSettings = {
 };
 
 /** Copy supported settings without mutating defaults or carrying PicGo fields. */
-export function migrateSettings(data: Partial<PluginSettings> | null): PluginSettings {
-  const saved = data || {};
+export function migrateSettings(data: unknown): PluginSettings {
+  const saved = isRecord(data) ? data : {};
   const settings: PluginSettings = {
     ...DEFAULT_SETTINGS,
-    s3: { ...DEFAULT_SETTINGS.s3, ...saved.s3 },
+    s3: { ...DEFAULT_SETTINGS.s3 },
   };
+  if (isRecord(saved.s3)) {
+    for (const key of ["endpoint", "region", "bucket", "accessKeyId", "secretAccessKey", "sessionToken", "prefix", "publicBaseUrl"] as const) {
+      if (typeof saved.s3[key] === "string") settings.s3[key] = saved.s3[key];
+    }
+    if (typeof saved.s3.forcePathStyle === "boolean") settings.s3.forcePathStyle = saved.s3.forcePathStyle;
+  }
   for (const key of ["uploadByClipSwitch", "workOnNetWork", "applyImage"] as const) {
     if (typeof saved[key] === "boolean") settings[key] = saved[key];
   }
   for (const key of ["imageSizeSuffix", "newWorkBlackDomains"] as const) {
     if (typeof saved[key] === "string") settings[key] = saved[key];
   }
-  if (["origin", "none", "removeDefault"].includes(saved.imageDesc)) settings.imageDesc = saved.imageDesc;
+  if (saved.imageDesc === "origin" || saved.imageDesc === "none" || saved.imageDesc === "removeDefault") settings.imageDesc = saved.imageDesc;
   settings.deleteSource = saved.settingsVersion === 1 && saved.deleteSource === true;
   return settings;
 }
 
+type SettingRow = {
+  name: string;
+  desc?: string;
+} & ({ render: (setting: Setting) => void } | { render?: never });
+
 export class SettingTab extends PluginSettingTab {
   private testing = false;
   private testStatus = "";
+  private testButton?: ButtonComponent;
+  private testResult?: HTMLElement;
   constructor(app: App, private plugin: ImageAutoUploadPlugin) { super(app, plugin); }
+
+  // Obsidian 1.13+ renders and indexes these; older versions call display().
+  getSettingDefinitions(): SettingDefinitionItem[] {
+    return [{ type: "group", heading: t("S3 upload"), items: this.getRows() }];
+  }
 
   display() {
     const { containerEl } = this;
     containerEl.empty();
-    containerEl.createEl("h2", { text: t("S3 upload") });
-    containerEl.createEl("p", { text: t("S3 credentials warning") });
-    const fields: [keyof S3Settings, Parameters<typeof t>[0], string, boolean?][] = [
+    new Setting(containerEl).setName(t("S3 upload")).setHeading();
+    for (const row of this.getRows()) {
+      const setting = new Setting(containerEl).setName(row.name);
+      if (row.desc) setting.setDesc(row.desc);
+      row.render?.(setting);
+    }
+  }
+
+  private getRows(): SettingRow[] {
+    const rows: SettingRow[] = [{ name: t("S3 credentials warning") }];
+    const fields: [Exclude<keyof S3Settings, "forcePathStyle">, Parameters<typeof t>[0], string, boolean?][] = [
       ["endpoint", "Endpoint", "https://s3.ap-southeast-1.amazonaws.com"],
       ["region", "Region", "ap-southeast-1"],
       ["bucket", "Bucket", "my-images"],
@@ -82,34 +110,78 @@ export class SettingTab extends PluginSettingTab {
       ["prefix", "Object prefix", "obsidian"],
     ];
     for (const [key, label, placeholder, secret] of fields) {
-      new Setting(containerEl).setName(t(label)).addText(text => {
+      rows.push({ name: t(label), render: setting => { setting.addText(text => {
         if (secret) text.inputEl.type = "password";
         text.setPlaceholder(placeholder).setValue(String(this.plugin.settings.s3[key]))
           .onChange(async value => {
-            (this.plugin.settings.s3[key] as string) = value.trim();
+            this.plugin.settings.s3[key] = value.trim();
             await this.plugin.saveSettings();
           });
-      });
+      }); } });
     }
-    new Setting(containerEl).setName(t("Path style"))
-      .setDesc(t("Path style description"))
-      .addToggle(toggle => toggle.setValue(this.plugin.settings.s3.forcePathStyle)
+    rows.push({ name: t("Path style"), desc: t("Path style description"),
+      render: setting => { setting.addToggle(toggle => toggle.setValue(this.plugin.settings.s3.forcePathStyle)
         .onChange(async value => {
           this.plugin.settings.s3.forcePathStyle = value;
           await this.plugin.saveSettings();
-        }));
-    containerEl.createEl("p", { text: t("Public URL description") });
-    const connection = new Setting(containerEl).setName(t("Test connection"))
-      .setDesc(t("Test connection description"));
-    const result = containerEl.createEl("p", { text: this.testStatus });
+        })); } });
+    rows.push({ name: t("Public URL description") });
+    rows.push({ name: t("Test connection"), desc: t("Test connection description"),
+      render: setting => this.renderConnection(setting) });
+    const toggles = [
+      ["uploadByClipSwitch", "Auto pasted upload"],
+      ["workOnNetWork", "Work on network"],
+      ["applyImage", "Upload when clipboard has image and text together"],
+      ["deleteSource", "Delete source file after you upload file"],
+    ] as const;
+    for (const [key, label] of toggles) {
+      rows.push({ name: t(label),
+        desc: key === "deleteSource" ? t("Safe deletion description")
+          : key === "workOnNetWork" ? t("Work on network Description") : undefined,
+        render: setting => { setting.addToggle(toggle => toggle.setValue(this.plugin.settings[key])
+          .onChange(async value => {
+            this.plugin.settings[key] = value;
+            await this.plugin.saveSettings();
+          })); } });
+    }
+    rows.push({ name: t("Network Domain Black List"), desc: t("Network Domain Black List Description"),
+      render: setting => { setting.addTextArea(text => text.setValue(this.plugin.settings.newWorkBlackDomains)
+        .onChange(async value => {
+          this.plugin.settings.newWorkBlackDomains = value;
+          await this.plugin.saveSettings();
+        })); } });
+    rows.push({ name: t("Image desc"), render: setting => { setting.addDropdown(dropdown => dropdown.addOption("origin", t("reserve"))
+      .addOption("none", t("remove all")).addOption("removeDefault", t("remove default"))
+      .setValue(this.plugin.settings.imageDesc)
+      .onChange(async value => {
+        if (value !== "origin" && value !== "none" && value !== "removeDefault") return;
+        this.plugin.settings.imageDesc = value;
+        await this.plugin.saveSettings();
+      })); } });
+    rows.push({ name: t("Image size suffix"), desc: t("Image size suffix Description"),
+      render: setting => { setting.addText(text => text.setValue(this.plugin.settings.imageSizeSuffix)
+        .onChange(async value => {
+          this.plugin.settings.imageSizeSuffix = value;
+          await this.plugin.saveSettings();
+        })); } });
+    return rows;
+  }
+
+  private renderConnection(setting: Setting) {
+    const result = setting.descEl.createEl("p", { text: this.testStatus, cls: "image-s3-upload-connection-result" });
+    this.testResult = result;
     result.setAttribute("aria-live", "polite");
-    result.setAttribute("style", "white-space: pre-wrap");
-    connection.addButton(button => button.setButtonText(t("Test connection")).setDisabled(this.testing)
+    setting.addButton(button => {
+      this.testButton = button;
+      button.setButtonText(t("Test connection")).setDisabled(this.testing)
       .onClick(async () => {
         if (this.testing) return;
         this.testing = true;
         const settings = { ...this.plugin.settings.s3 };
-        const show = (text: string) => { this.testStatus = text; result.textContent = text; };
+        const show = (text: string) => {
+          this.testStatus = text;
+          if (this.testResult) this.testResult.textContent = text;
+        };
         button.setDisabled(true);
         show(t("Test uploading"));
         try {
@@ -121,47 +193,10 @@ export class SettingTab extends PluginSettingTab {
         } finally {
           this.testing = false;
           button.setDisabled(false);
-          // A settings redraw may have replaced the original button while awaiting network I/O.
-          if (!button.buttonEl.isConnected && this.containerEl.isConnected) this.display();
+          // A search result or redraw may have replaced the original controls.
+          this.testButton?.setDisabled(false);
         }
-      }));
-    const toggles: [keyof PluginSettings, Parameters<typeof t>[0]][] = [
-      ["uploadByClipSwitch", "Auto pasted upload"],
-      ["workOnNetWork", "Work on network"],
-      ["applyImage", "Upload when clipboard has image and text together"],
-      ["deleteSource", "Delete source file after you upload file"],
-    ];
-    for (const [key, label] of toggles) {
-      const setting = new Setting(containerEl).setName(t(label));
-      if (key === "deleteSource") setting.setDesc(t("Safe deletion description"));
-      if (key === "workOnNetWork") setting.setDesc(t("Work on network Description"));
-      setting.addToggle(toggle => toggle.setValue(Boolean(this.plugin.settings[key]))
-        .onChange(async value => {
-          (this.plugin.settings[key] as boolean) = value;
-          await this.plugin.saveSettings();
-        }));
-    }
-    new Setting(containerEl).setName(t("Network Domain Black List"))
-      .setDesc(t("Network Domain Black List Description"))
-      .addTextArea(text => text.setValue(this.plugin.settings.newWorkBlackDomains)
-        .onChange(async value => {
-          this.plugin.settings.newWorkBlackDomains = value;
-          await this.plugin.saveSettings();
-        }));
-    new Setting(containerEl).setName(t("Image desc"))
-      .addDropdown(dropdown => dropdown.addOption("origin", t("reserve"))
-        .addOption("none", t("remove all")).addOption("removeDefault", t("remove default"))
-        .setValue(this.plugin.settings.imageDesc)
-        .onChange(async (value: PluginSettings["imageDesc"]) => {
-          this.plugin.settings.imageDesc = value;
-          await this.plugin.saveSettings();
-        }));
-    new Setting(containerEl).setName(t("Image size suffix"))
-      .setDesc(t("Image size suffix Description"))
-      .addText(text => text.setValue(this.plugin.settings.imageSizeSuffix)
-        .onChange(async value => {
-          this.plugin.settings.imageSizeSuffix = value;
-          await this.plugin.saveSettings();
-        }));
+      });
+    });
   }
 }

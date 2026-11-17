@@ -23,6 +23,9 @@ if (versions[manifest.version] !== manifest.minAppVersion) {
 if (!/^[a-z]+(?:-[a-z]+)*$/.test(manifest.id) || manifest.id.includes("obsidian") || manifest.id.endsWith("plugin")) {
   fail("manifest.json id must contain only lowercase letters and hyphens, must not contain 'obsidian', and must not end with 'plugin'.");
 }
+if (!/[.!?]$/.test(manifest.description)) {
+  fail("manifest.json description must end with punctuation.");
+}
 if (tag !== undefined && tag !== manifest.version) {
   fail(`Release tag must be exactly ${manifest.version}, without a v prefix; received ${tag}.`);
 }

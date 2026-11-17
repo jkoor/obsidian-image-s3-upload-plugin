@@ -90,7 +90,7 @@ export function getImageReferences(value: string, includeLinks = false): ImageRe
     const destination = value.slice(close + 2, end).trim();
     const path = destination.startsWith("<") ? /^<([^>]*)>/.exec(destination)?.[1]
       : destination.replace(/\s+(?:"[\s\S]*"|'[\s\S]*'|\([^)]*\))\s*$/, "");
-    if (path) references.push({ path: path.replace(/\\([()\[\]\\ ])/g, "$1"),
+    if (path) references.push({ path: path.replace(/\\([()[\]\\ ])/g, "$1"),
       name: value.slice(open + 1, close), source: value.slice(start, end + 1), start, end: end + 1 });
     start = end;
   }
@@ -110,7 +110,7 @@ export function replaceImageReferences(value: string, replacements: ReadonlyMap<
 export default class Helper {
   constructor(public app: App) {}
 
-  getFrontmatterValue(key: string, defaultValue: unknown = undefined, file = this.app.workspace.getActiveFile()) {
+  getFrontmatterValue(key: string, defaultValue: unknown = undefined, file = this.app.workspace.getActiveFile()): unknown {
     if (!file) return defaultValue;
     const frontmatter = this.app.metadataCache.getFileCache(file)?.frontmatter;
     return frontmatter && Object.prototype.hasOwnProperty.call(frontmatter, key) ? frontmatter[key] : defaultValue;
