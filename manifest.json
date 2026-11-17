@@ -1,6 +1,6 @@
 {
   "id": "image-s3-upload",
-  "name": "S3 Image Uploader",
+  "name": "image-s3-upload",
   "version": "5.0.0",
   "minAppVersion": "1.7.2",
   "description": "Upload clipboard, local and remote images directly to S3-compatible storage",

@@ -1,6 +1,6 @@
 # 5.0.0
 
-- Rename the plugin to S3 Image Uploader, with the independent plugin ID `image-s3-upload`.
+- Rename the plugin to `image-s3-upload`, with the independent plugin ID `image-s3-upload`.
 - Replace the PicGo backend with direct uploads to AWS S3 and S3-compatible storage.
 - Upload clipboard, dropped, local and remote images with batch deduplication and progress reporting.
 - Add connection testing that checks uploads and public image access separately.

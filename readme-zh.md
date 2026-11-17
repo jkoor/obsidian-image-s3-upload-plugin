@@ -1,10 +1,10 @@
-# S3 Image Uploader
+# image-s3-upload
 
 直接将图片上传到 AWS S3 或兼容 S3 的对象存储，无需 PicGo、桌面助手或额外上传服务器。要求 **Obsidian 1.7.2 及以上**。
 
 ## 配置
 
-将构建的 `main.js` 和 `manifest.json` 放入库内 `.obsidian/plugins/image-s3-upload/`，启用 **S3 Image Uploader** 并打开设置。
+将构建的 `main.js` 和 `manifest.json` 放入库内 `.obsidian/plugins/image-s3-upload/`，启用 **image-s3-upload** 并打开设置。
 
 | 配置 | 说明 |
 | --- | --- |
@@ -56,7 +56,7 @@ S3 配置不完整时不拦截普通粘贴/拖拽。粘贴图片失败后，请�
 
 ## 迁移与构建
 
-此分支使用插件 ID `image-s3-upload`。从原版迁移时，请先禁用原插件，再将 S3 Image Uploader 安装到新目录。如需保留通用偏好，可在启用前将原插件的 `data.json` 复制到新目录。加载设置时会移除 PicGo 专用配置和历史删除记录，S3 需要单独配置。保留原命令 ID 和 `image-auto-upload` frontmatter 字段，不改写已有笔记链接。本版本不提供 S3 远程删除。
+此分支使用插件 ID `image-s3-upload`。从原版迁移时，请先禁用原插件，再将 image-s3-upload 安装到新目录。如需保留通用偏好，可在启用前将原插件的 `data.json` 复制到新目录。加载设置时会移除 PicGo 专用配置和历史删除记录，S3 需要单独配置。保留原命令 ID 和 `image-auto-upload` frontmatter 字段，不改写已有笔记链接。本版本不提供 S3 远程删除。
 
 ```sh
 pnpm install --frozen-lockfile

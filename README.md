@@ -1,12 +1,12 @@
 [中文文档](readme-zh.md)
 
-# S3 Image Uploader
+# image-s3-upload
 
 Upload images directly to AWS S3 or S3-compatible object storage. No PicGo, desktop helper, or upload server is required. Requires Obsidian **1.7.2 or later**.
 
 ## Setup
 
-Install this plugin's `main.js` and `manifest.json` in `.obsidian/plugins/image-s3-upload/`, enable **S3 Image Uploader**, and open its settings.
+Install this plugin's `main.js` and `manifest.json` in `.obsidian/plugins/image-s3-upload/`, enable **image-s3-upload**, and open its settings.
 
 | Setting | Example / meaning |
 | --- | --- |
@@ -61,7 +61,7 @@ Android/iOS behavior still requires device testing. See [TESTING.md](TESTING.md)
 
 ## Migration and development
 
-This fork uses the plugin ID `image-s3-upload`. When moving from the original plugin, disable it and install S3 Image Uploader in the new directory. To retain general preferences, copy the original plugin's `data.json` to the new directory before enabling it. Old PicGo settings and remote-delete records are removed when settings are loaded; configure S3 separately. Command IDs and the `image-auto-upload` frontmatter key are retained. Existing note links are not rewritten. Remote object deletion is not part of this version.
+This fork uses the plugin ID `image-s3-upload`. When moving from the original plugin, disable it and install image-s3-upload in the new directory. To retain general preferences, copy the original plugin's `data.json` to the new directory before enabling it. Old PicGo settings and remote-delete records are removed when settings are loaded; configure S3 separately. Command IDs and the `image-auto-upload` frontmatter key are retained. Existing note links are not rewritten. Remote object deletion is not part of this version.
 
 ```sh
 pnpm install --frozen-lockfile
