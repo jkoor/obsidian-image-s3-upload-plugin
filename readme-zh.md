@@ -66,3 +66,22 @@ pnpm run build
 ```
 
 更新插件文件后重启 Obsidian。不要提交真实凭据或库内 `data.json`。
+
+## 发布插件
+
+使用 Node.js 24 和 `package.json` 中锁定的 pnpm 版本。推送分支或提交 PR 后，**Check plugin** 工作流会执行测试、版本检查、类型检查和构建，并保留插件构建产物供下载。
+
+1. 将 `package.json` 和 `manifest.json` 的版本号统一为 `主版本.次版本.修订版本`（当前为 `5.0.0`），在 `versions.json` 中添加对应的最低 Obsidian 版本，并更新 `CHANGELOG.md`。
+2. 执行 `pnpm run test` 和 `pnpm run build`，提交并推送修改。
+3. 创建并推送与版本号完全一致的标签，**不要添加 `v` 前缀**：
+
+   ```sh
+   git tag 5.0.0
+   git push origin 5.0.0
+   ```
+
+4. **Release plugin** 工作流会创建 GitHub Release **草稿**，附带 `main.js`、`manifest.json`、可选的 `styles.css` 和 `obsidian-image-auto-upload-plugin-5.0.0.zip`。在 GitHub Releases 检查说明后，点击 **Publish release** 正式发布。
+
+也可以进入 **Actions → Release plugin → Run workflow**，填写已存在的版本标签手动运行。工作流会检出该标签并验证版本一致性；重复执行可以更新草稿附件，已发布版本的附件禁止覆盖。发布权限使用仓库自带的 `GITHUB_TOKEN`，无需配置个人 Token 或额外 Secret，但需要在仓库中启用 GitHub Actions。
+
+手动安装时，将 Release 的 `main.js` 和 `manifest.json` 下载到插件目录，或将 ZIP 解压到 `.obsidian/plugins/`。插件目录名保持为 `obsidian-image-auto-upload-plugin`。

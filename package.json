@@ -1,12 +1,13 @@
 {
   "name": "obsidian-image-auto-upload-plugin",
-  "version": "4.1.0",
+  "version": "5.0.0",
   "type": "module",
   "description": "Upload local and remote images directly to S3-compatible storage in Obsidian",
   "main": "main.js",
   "scripts": {
     "dev": "rollup --config rollup.config.js -w",
-    "build": "pnpm run typecheck && rollup --config rollup.config.js",
+    "build": "pnpm run check:version && pnpm run typecheck && rollup --config rollup.config.js",
+    "check:version": "node scripts/check-version.mjs",
     "typecheck": "tsc --noEmit -p tsconfig.json --composite false && tsc --noEmit -p tsconfig.vitest.json",
     "test": "vitest run"
   },

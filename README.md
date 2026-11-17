@@ -71,3 +71,22 @@ pnpm run build
 ```
 
 Build output: `main.js` and the source `manifest.json`. Restart Obsidian after replacing plugin files. Never commit a vault's `data.json` or real test credentials.
+
+## Releasing
+
+Use Node.js 24 and the pnpm version pinned in `package.json`. Pushes and pull requests run tests, version validation, type checks and a build; the **Check plugin** workflow also stores the plugin files as a build artifact.
+
+1. Set the same `major.minor.patch` version in `package.json` and `manifest.json` (currently `5.0.0`). Add that version and its minimum Obsidian version to `versions.json`, and update `CHANGELOG.md`.
+2. Run `pnpm run test` and `pnpm run build`, then commit and push the changes.
+3. Create and push a tag matching the version exactly, **without a `v` prefix**:
+
+   ```sh
+   git tag 5.0.0
+   git push origin 5.0.0
+   ```
+
+4. The **Release plugin** workflow creates a **draft GitHub Release** with `main.js`, `manifest.json`, optional `styles.css`, and `obsidian-image-auto-upload-plugin-5.0.0.zip`. Review the release notes in GitHub Releases and click **Publish release** when ready.
+
+You can also run **Actions → Release plugin → Run workflow**, entering an existing version tag. The workflow checks out that tag and verifies it against the version files. Reruns can replace assets on a draft; published releases are protected from replacement. The repository's built-in `GITHUB_TOKEN` supplies release permissions; no personal token or additional secret is needed. GitHub Actions must be enabled in the repository.
+
+For manual installation, download `main.js` and `manifest.json` from the release into the plugin directory, or extract the ZIP into `.obsidian/plugins/`. Keep the plugin directory named `obsidian-image-auto-upload-plugin`.

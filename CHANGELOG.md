@@ -1,11 +1,13 @@
 # 5.0.0
 
-1. trash respect ob setting
-2. fix remote mod for cors
-3. fix change uploader should restart plugin
-4. **remove fix-path support**
-5. use timestamp name for remote mode
-6. **mobile support**
+- Replace the PicGo backend with direct uploads to AWS S3 and S3-compatible storage.
+- Upload clipboard, dropped, local and remote images with batch deduplication and progress reporting.
+- Add connection testing that checks uploads and public image access separately.
+- Preserve existing plugin IDs and general preferences while removing obsolete PicGo settings.
+- Use Obsidian's trash with reference and content checks when optional source cleanup is enabled.
+- Use mobile-compatible runtime APIs; Android/iOS device acceptance testing is still required.
+- Require Obsidian 1.7.2 or later.
+- Add version validation, CI builds and GitHub draft releases with installable plugin assets.
 
 # 4.1.0(2024.11.28)
 
