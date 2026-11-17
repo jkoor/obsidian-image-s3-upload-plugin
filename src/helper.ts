@@ -47,22 +47,24 @@ function prose(value: string): string {
   return chars.join("");
 }
 
-export function getImageReferences(value: string): ImageReference[] {
+export function getImageReferences(value: string, includeLinks = false): ImageReference[] {
   const masked = prose(value);
   const references: ImageReference[] = [];
   for (let start = 0; start < masked.length; start++) {
-    if (masked[start] !== "!" || masked[start + 1] !== "[" || escaped(masked, start)) continue;
-    if (masked[start + 2] === "[") {
-      const end = masked.indexOf("]]", start + 3);
+    const embed = masked[start] === "!" && masked[start + 1] === "[";
+    if ((!embed && (!includeLinks || masked[start] !== "[")) || escaped(masked, start)) continue;
+    const open = start + (embed ? 1 : 0);
+    if (masked[open + 1] === "[") {
+      const end = masked.indexOf("]]", open + 2);
       if (end < 0) continue;
-      const [path, ...suffix] = value.slice(start + 3, end).split("|");
+      const [path, ...suffix] = value.slice(open + 2, end).split("|");
       const base = safeDecode(path).split("/").pop().replace(/\.[^.]+$/, "");
       references.push({ path, name: base + (suffix.length ? `|${suffix.join("|")}` : ""),
         source: value.slice(start, end + 2), start, end: end + 2 });
       start = end + 1;
       continue;
     }
-    let close = start + 2;
+    let close = open + 1;
     let depth = 1;
     for (; close < masked.length; close++) {
       if (escaped(masked, close)) continue;
@@ -89,7 +91,7 @@ export function getImageReferences(value: string): ImageReference[] {
     const path = destination.startsWith("<") ? /^<([^>]*)>/.exec(destination)?.[1]
       : destination.replace(/\s+(?:"[\s\S]*"|'[\s\S]*'|\([^)]*\))\s*$/, "");
     if (path) references.push({ path: path.replace(/\\([()\[\]\\ ])/g, "$1"),
-      name: value.slice(start + 2, close), source: value.slice(start, end + 1), start, end: end + 1 });
+      name: value.slice(open + 1, close), source: value.slice(start, end + 1), start, end: end + 1 });
     start = end;
   }
   return references;

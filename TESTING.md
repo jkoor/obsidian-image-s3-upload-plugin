@@ -24,6 +24,14 @@ node -e "const fs=require('node:fs');const s=fs.readFileSync('main.js','utf8');c
 8. Download remote images to each attachment-location mode. Verify only successfully written files replace note references.
 9. Leave source deletion off initially. If testing it, use disposable attachments and verify other Markdown references and unavailable metadata prevent deletion.
 
+## New feature acceptance
+
+1. In settings, click **Test connection** with valid configuration. Verify separate upload and public-access success messages and locate the retained tiny PNG using the displayed key. No list or delete permission is needed. Try a wrong public base URL/read policy: upload must still report success while access fails. Try invalid credentials: access must not be tested. Rapid clicks must launch only one test; changing settings during a test must not change that test's configuration.
+2. Open a note's top-right **More options → Upload images in this note**, in both reading and editing modes. Verify only that note is processed, including when another tab becomes active. Trigger again during upload and verify the existing-task message. Test desktop and mobile menus.
+3. Upload several files, including repeated references and one failure. Verify one updating notice per operation, deduplicated file progress and reference-based final totals. Check notices during slow uploads and retries, tab switches and simultaneous operations on different notes. Dismissing a notice must not cancel the operation; unloading the plugin must remove notices.
+4. With deletion enabled and a disposable image referenced only once, upload it and verify the note link is replaced before the unchanged original moves to the configured Obsidian trash. Repeat with a delayed metadata update: a matching update within three seconds should allow cleanup; timeout must preserve the image and explain why.
+5. Verify deletion is blocked by ordinary Markdown/Wiki links, embeds in another note, unsaved references in another open editor, incomplete metadata and changed source bytes. Verify failed uploads, failed note writes, removed references and URL-copy-only uploads do not delete the image. Simulate trash failure and verify upload success plus a separate cleanup failure count. Restore disposable files from trash after acceptance.
+
 ## Android and iOS — run independently on each available device
 
 1. Install the build, configure an HTTPS endpoint reachable from the phone and a synchronized device clock. No PicGo or other helper should be running.

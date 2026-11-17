@@ -1,6 +1,7 @@
 import { App, PluginSettingTab, Setting } from "obsidian";
 import type ImageAutoUploadPlugin from "./main";
 import { t } from "./lang/helpers";
+import { testConnection } from "./connection";
 
 export interface S3Settings {
   endpoint: string;
@@ -61,6 +62,8 @@ export function migrateSettings(data: Partial<PluginSettings> | null): PluginSet
 }
 
 export class SettingTab extends PluginSettingTab {
+  private testing = false;
+  private testStatus = "";
   constructor(app: App, private plugin: ImageAutoUploadPlugin) { super(app, plugin); }
 
   display() {
@@ -96,6 +99,32 @@ export class SettingTab extends PluginSettingTab {
           await this.plugin.saveSettings();
         }));
     containerEl.createEl("p", { text: t("Public URL description") });
+    const connection = new Setting(containerEl).setName(t("Test connection"))
+      .setDesc(t("Test connection description"));
+    const result = containerEl.createEl("p", { text: this.testStatus });
+    result.setAttribute("aria-live", "polite");
+    result.setAttribute("style", "white-space: pre-wrap");
+    connection.addButton(button => button.setButtonText(t("Test connection")).setDisabled(this.testing)
+      .onClick(async () => {
+        if (this.testing) return;
+        this.testing = true;
+        const settings = { ...this.plugin.settings.s3 };
+        const show = (text: string) => { this.testStatus = text; result.textContent = text; };
+        button.setDisabled(true);
+        show(t("Test uploading"));
+        try {
+          const checked = await testConnection(settings, () => show(t("Test checking access")));
+          show(`${t("Test upload success")}\n${checked.accessible ? t("Test access success")
+            : `${t("Test access failed")}: ${checked.accessError}. ${t("Test access hint")}`}\n${t("Test retained key")}: ${checked.object.key}`);
+        } catch (error) {
+          show(`${t("Test upload failed")}: ${error instanceof Error ? error.message : t("Operation failed")}`);
+        } finally {
+          this.testing = false;
+          button.setDisabled(false);
+          // A settings redraw may have replaced the original button while awaiting network I/O.
+          if (!button.buttonEl.isConnected && this.containerEl.isConnected) this.display();
+        }
+      }));
     const toggles: [keyof PluginSettings, Parameters<typeof t>[0]][] = [
       ["uploadByClipSwitch", "Auto pasted upload"],
       ["workOnNetWork", "Work on network"],
