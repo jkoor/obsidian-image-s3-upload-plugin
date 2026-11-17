@@ -1,3 +1,10 @@
+# 5.0.1
+
+- Use `image-s3-upload` consistently for the plugin name, plugin ID and package name.
+- Update installation paths, release archive names and migration instructions for the independent plugin ID.
+- Publish tagged releases automatically after tests and builds pass; manual runs can still create drafts.
+- Keep the minimum supported Obsidian version at 1.7.2.
+
 # 5.0.0
 
 - Rename the plugin to `image-s3-upload`, with the independent plugin ID `image-s3-upload`.

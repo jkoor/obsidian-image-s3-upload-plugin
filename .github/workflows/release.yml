@@ -7,9 +7,13 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "Existing version tag, without a v prefix (for example, 5.0.0)"
+        description: "Existing version tag, without a v prefix (for example, 5.0.1)"
         required: true
         type: string
+      publish:
+        description: "Publish the release immediately (otherwise create a draft)"
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -27,6 +31,7 @@ jobs:
       RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
       GH_TOKEN: ${{ github.token }}
       GH_REPO: ${{ github.repository }}
+      PUBLISH_RELEASE: ${{ github.event_name == 'push' || inputs.publish }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -60,17 +65,22 @@ jobs:
           fi
           (cd dist && zip -r "../$PLUGIN_ID-$RELEASE_TAG.zip" "$PLUGIN_ID")
 
-      - name: Create or update draft release
+      - name: Create or update release
         shell: bash
         run: |
           assets=(main.js manifest.json ./*-"$RELEASE_TAG".zip)
           if [ -f styles.css ]; then
             assets+=(styles.css)
           fi
+          node --input-type=module -e "import { readFileSync, writeFileSync } from 'node:fs'; const section = readFileSync('CHANGELOG.md', 'utf8').split(/^# /m).find(part => part.startsWith(process.env.RELEASE_TAG + '\n') || part.startsWith(process.env.RELEASE_TAG + '\r\n')); if (!section) throw new Error('Missing changelog entry'); writeFileSync('release-notes.md', section.slice(section.indexOf('\n') + 1).trim() + '\n');"
           if gh release view "$RELEASE_TAG" --json isDraft > release-state.json; then
             node -e "if (!JSON.parse(require('fs').readFileSync('release-state.json', 'utf8')).isDraft) { console.error('Refusing to replace assets of a published release.'); process.exit(1); }"
             gh release upload "$RELEASE_TAG" "${assets[@]}" --clobber
+            gh release edit "$RELEASE_TAG" --notes-file release-notes.md
           else
             gh release create "$RELEASE_TAG" "${assets[@]}" \
-              --verify-tag --draft --title "$RELEASE_TAG" --generate-notes
+              --verify-tag --draft --title "$RELEASE_TAG" --notes-file release-notes.md
+          fi
+          if [ "$PUBLISH_RELEASE" = "true" ]; then
+            gh release edit "$RELEASE_TAG" --draft=false --latest
           fi
